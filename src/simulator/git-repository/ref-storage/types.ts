@@ -1,5 +1,5 @@
 import { GitObjectAddress } from '../object-storage/types';
-import { Tree, TreeNode, TreePath } from '../../../utils/tree';
+import { Tree, TreeNode, TreePath } from '../../utils/tree';
 
 export type RefName = string;
 export type RefPath = TreePath<RefName>;

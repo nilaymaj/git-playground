@@ -12,7 +12,7 @@ import {
   GitObjectStorage,
   GitObjectAddress,
 } from './types';
-import { generateFileBlob } from '../../../file-system';
+import { generateFileBlob } from '../../file-system';
 
 /**
  * Creates a sample unique Git blob object.

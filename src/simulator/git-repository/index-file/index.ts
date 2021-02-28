@@ -1,5 +1,5 @@
-import { FileSystem, FileSystemPath } from '../../../file-system/types';
-import { serializeLeafs } from '../../../utils/tree';
+import { FileSystem, FileSystemPath } from '../../file-system/types';
+import { serializeLeafs } from '../../utils/tree';
 import { writeObject } from '../object-storage';
 import { hashBlobObject } from '../object-storage/hash-object';
 import {
@@ -8,7 +8,7 @@ import {
   GitObjectStorage,
 } from '../object-storage/types';
 import { serializeGitTree } from '../object-storage/utils';
-import * as SortedArray from '../../../utils/sorted-array';
+import * as SortedArray from '../../utils/sorted-array';
 import { IndexFile, IndexFileItem } from './types';
 
 /**

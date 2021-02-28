@@ -1,5 +1,5 @@
 import { GitObjectAddress, GitObjectStorage, GitBlob } from './types';
-import { Tree } from '../../../utils/tree';
+import { Tree } from '../../utils/tree';
 import { readObject } from './index';
 
 export type SerializedGitTree = Tree<GitBlob, string>;

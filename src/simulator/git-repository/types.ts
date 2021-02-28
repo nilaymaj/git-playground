@@ -1,8 +1,5 @@
-import {
-  GitObjectAddress,
-  GitObjectStorage,
-} from './components/object-storage/types';
-import { GitRefStorage, RefPath } from './components/ref-storage/types';
+import { GitObjectAddress, GitObjectStorage } from './object-storage/types';
+import { GitRefStorage, RefPath } from './ref-storage/types';
 
 // Detached head - points to commit object
 interface DetachedHead {

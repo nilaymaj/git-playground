@@ -1,4 +1,4 @@
-import { FileBlob } from '../../../file-system/types';
+import { FileBlob } from '../../file-system/types';
 
 /**
  * A simple Git blob, representing the contents of a single file

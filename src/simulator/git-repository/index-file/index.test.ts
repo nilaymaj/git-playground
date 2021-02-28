@@ -1,7 +1,7 @@
 import * as Index from './index';
-import * as FS from '../../../file-system';
-import { FileBlob } from '../../../file-system/types';
-import { createSampleFS } from '../../../file-system/index.test';
+import * as FS from '../../file-system';
+import { FileBlob } from '../../file-system/types';
+import { createSampleFS } from '../../file-system/index.test';
 import { createObjectStorage } from '../object-storage';
 import { hashBlobObject } from '../object-storage/hash-object';
 

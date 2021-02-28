@@ -1,5 +1,5 @@
-import { FileSystemPath } from '../../../file-system/types';
-import { SortedArray } from '../../../utils/sorted-array';
+import { FileSystemPath } from '../../file-system/types';
+import { SortedArray } from '../../utils/sorted-array';
 import { GitObjectAddress } from '../object-storage/types';
 
 export interface IndexFileItem {

@@ -4,7 +4,7 @@ import {
   getNodeAt,
   insertLeafAt,
   isLeafNode,
-} from '../../../utils/tree';
+} from '../../utils/tree';
 import { GitRefStorage, RefPath, RefTreeNode } from './types';
 
 /**
