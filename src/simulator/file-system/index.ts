@@ -88,3 +88,48 @@ export const bumpFileVersionAt = (
   file.contents.version += 1;
   return true;
 };
+
+/**
+ * Move a file/directory from one location to another.
+ * Returns success state of operation.
+ *
+ * - Overwrites existing item at destination path provided.
+ * - Removes item at source by default. To disable this, pass `preserveSrc`.
+ *
+ * @param {FileSystem} fileSystem The file system object
+ * @param {FileSystemPath} srcPath Path to the item to be copied
+ * @param {FileSystemPath} destPath Destination path, including destination filename
+ * @param {boolean} [preserveSrc] Pass `true` if source item should not be deleted
+ */
+export const moveItem = (
+  fileSystem: FileSystem,
+  srcPath: FileSystemPath,
+  destPath: FileSystemPath,
+  preserveSrc?: boolean
+): boolean => {
+  // Validate source and destination paths
+  if (srcPath.length === 0) return false;
+  if (destPath.length === 0) return false;
+
+  // Check if the item exists
+  const item = getItemAt(fileSystem, srcPath);
+  if (!item) return false;
+
+  // Check if destination path is valid
+  const destDirPath = destPath.slice(0, -1);
+  const destDir = getItemAt(fileSystem, destDirPath);
+  if (!destDir || isLeafNode(destDir)) return false;
+
+  // Make a copy of the item and move it
+  const destItemName = destPath[destPath.length - 1];
+  const itemCopy = isLeafNode(item) ? { ...item } : new Map(Array.from(item));
+  destDir.set(destItemName, itemCopy);
+
+  // Remove the source item
+  const srcDirPath = srcPath.slice(0, -1);
+  const srcDir = getItemAt(fileSystem, srcDirPath);
+  if (!srcDir || isLeafNode(srcDir))
+    throw new Error('Something illegal just happened.');
+  if (!preserveSrc) srcDir.delete(srcPath[srcPath.length - 1]);
+  return true;
+};

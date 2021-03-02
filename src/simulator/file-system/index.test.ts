@@ -109,3 +109,46 @@ test('Bump file version', () => {
   // Can't bump version of a directory
   expect(FS.bumpFileVersionAt(fs, ['dir1', 'dir2'])).toBe(false);
 });
+
+test('Move an item', () => {
+  const fs = createSampleFS();
+
+  // Empty source or destination paths don't make sense
+  expect(FS.moveItem(fs, [], [])).toBe(false);
+  expect(FS.moveItem(fs, [], [], true)).toBe(false);
+  expect(FS.moveItem(fs, [], ['dir1'])).toBe(false);
+  expect(FS.moveItem(fs, [], ['dir1'], true)).toBe(false);
+  expect(FS.moveItem(fs, ['dir1'], [])).toBe(false);
+  expect(FS.moveItem(fs, ['dir1'], [], true)).toBe(false);
+
+  // Can't move items that don't exist
+  expect(FS.moveItem(fs, ['dir1', '?'], ['file5'])).toBe(false);
+  expect(FS.moveItem(fs, ['dir1', '?'], ['file5'], true)).toBe(false);
+
+  // Can't move to invalid destination
+  expect(FS.moveItem(fs, ['file4'], ['dir2', '?'])).toBe(false);
+  expect(FS.moveItem(fs, ['file4'], ['dir2', '?'], true)).toBe(false);
+  expect(FS.moveItem(fs, ['file4'], ['file4', '?'])).toBe(false);
+  expect(FS.moveItem(fs, ['file4'], ['file4', '?'], true)).toBe(false);
+
+  // Regular work day: move file to new location
+  expect(FS.moveItem(fs, ['dir1', 'file2'], ['file5'])).toBe(true);
+  expect(FS.getItemAt(fs, ['dir1', 'file2'])).toBeNull();
+  const newFile = FS.getItemAt(fs, ['file5']) as FileBlob;
+  expect(newFile.contents.contentToken).toBe('f2');
+
+  // Regular work day: "copy" directory to new location
+  expect(FS.moveItem(fs, ['dir1', 'dir2'], ['dir3'], true)).toBe(true);
+  // Check the source directory
+  const oldDir = FS.getItemAt(fs, ['dir1', 'dir2']) as FileSystemInternalNode;
+  expect(oldDir).not.toBeNull();
+  expect(Tree.isLeafNode(oldDir)).toBe(false);
+  expect(Array.from(oldDir).length).toBe(1);
+  expect((oldDir.get('file3') as FileBlob).contents.contentToken).toBe('f3');
+  // Check the destination directory
+  const newDir = FS.getItemAt(fs, ['dir3']) as FileSystemInternalNode;
+  expect(newDir).not.toBeNull();
+  expect(Tree.isLeafNode(newDir)).toBe(false);
+  expect(Array.from(newDir).length).toBe(1);
+  expect((newDir.get('file3') as FileBlob).contents.contentToken).toBe('f3');
+});
