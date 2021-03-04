@@ -149,3 +149,39 @@ test('Delete an item', () => {
   // Cannot delete items that don't exist
   expect(SortedArray.deleteItem(array, 2.5)).toBe(false);
 });
+
+test('Search for range', () => {
+  const array = createSampleArray();
+
+  const getSearchFn = (min: number, max: number) => {
+    return (a: number) => {
+      if (a < min) return -1;
+      else if (a > max) return 1;
+      else return 0;
+    };
+  };
+
+  const searchFn1 = getSearchFn(2, 3);
+  expect(SortedArray.findRange(array, searchFn1)).toStrictEqual({
+    start: 1,
+    end: 3,
+  });
+
+  const searchFn2 = getSearchFn(1, 3);
+  expect(SortedArray.findRange(array, searchFn2)).toStrictEqual({
+    start: 0,
+    end: 3,
+  });
+
+  const searchFn3 = getSearchFn(1, 1);
+  expect(SortedArray.findRange(array, searchFn3)).toStrictEqual({
+    start: 0,
+    end: 1,
+  });
+
+  const searchFn4 = getSearchFn(1.4, 1.6);
+  expect(SortedArray.findRange(array, searchFn4)).toStrictEqual({
+    start: 1,
+    end: 1,
+  });
+});

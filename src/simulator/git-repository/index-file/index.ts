@@ -1,5 +1,5 @@
-import { FileSystem, FileSystemPath } from '../../file-system/types';
-import { serializeLeafs } from '../../utils/tree';
+import { FileSystemNode, FileSystemPath } from '../../file-system/types';
+import { isLeafNode, serializeLeafs } from '../../utils/tree';
 import { writeObject } from '../object-storage';
 import { hashBlobObject } from '../object-storage/hash-object';
 import {
@@ -10,6 +10,7 @@ import {
 import { serializeGitTree } from '../object-storage/utils';
 import * as SortedArray from '../../utils/sorted-array';
 import { IndexFile, IndexFileItem } from './types';
+import { isPrefix } from '../../utils/path-utils';
 
 /**
  * Compare two strings lexicographically.
@@ -43,16 +44,24 @@ const comparePaths = (a: FileSystemPath, b: FileSystemPath): number => {
  */
 
 /**
+ * Creates a blank index file.
+ */
+export const createEmptyIndex = (): IndexFile =>
+  SortedArray.create(comparePaths, []);
+
+/**
  * Create an index tree from given file system tree.
  * May add objects to object storage for creating index entries.
  */
 export const createIndexFromFileTree = (
-  fileTree: FileSystem,
+  fileTree: FileSystemNode,
   objectStorage: GitObjectStorage,
   basePath: FileSystemPath = []
 ): IndexFile => {
   // Serialize file tree into its leaves
-  const fileTreeLeaves = serializeLeafs(fileTree, compareNames, basePath);
+  const fileTreeLeaves = isLeafNode(fileTree)
+    ? [{ path: basePath, value: fileTree }]
+    : serializeLeafs(fileTree, compareNames, basePath);
 
   // Convert file tree leaves to index file entries
   const indexEntries = fileTreeLeaves.map((leaf) => {
@@ -136,4 +145,64 @@ export const upsert = (
 export const remove = (indexFile: IndexFile, path: FileSystemPath): boolean => {
   if (path.length === 0) return false;
   return SortedArray.deleteItem(indexFile, path);
+};
+
+/**
+ * Gets the start and end index of the section of index file
+ * that contains entries at or under the specified path.
+ */
+export const getPathSection = (
+  indexFile: IndexFile,
+  path: FileSystemPath
+): { start: number; end: number } => {
+  return SortedArray.findRange(indexFile, (entryPath) => {
+    const isSubpath = isPrefix(entryPath, path);
+    if (isSubpath) return 0;
+    return comparePaths(entryPath, path);
+  });
+};
+
+/**
+ * Overwrites a part of the index file with the sub-index file provided.
+ * The part overwritten is that which represents the index for given path.
+ *
+ * Fails if sub-index does not "fit" into the main index, ie a blind overwrite
+ * would lead to an invalid index file.
+ *
+ * Ensure that the provided sub-index is self-consistent. If not,
+ * the full index file will also become inconsistent.
+ *
+ * @param indexFile The index file, a part of which is to be overwritten.
+ * @param path Determines the section of index file to be overwritten.
+ * @param subIndex The replacement for overwritten section.
+ */
+export const overwriteSection = (
+  indexFile: IndexFile,
+  path: FileSystemPath,
+  subIndex: IndexFile
+) => {
+  // Find the section of index file to be overwritten
+  const sectionLimits = getPathSection(indexFile, path);
+
+  // Validate that provided sub-index file fits in
+  if (subIndex.items.length !== 0) {
+    if (sectionLimits.start > 0) {
+      // Check the starting boundary
+      const itemBeforeSplit = indexFile.items[sectionLimits.start - 1].key;
+      const firstSubItem = subIndex.items[0].key;
+      if (comparePaths(itemBeforeSplit, firstSubItem) !== -1) return false;
+    }
+    if (sectionLimits.end < indexFile.items.length) {
+      // Check the ending boundary
+      const itemAfterSplit = indexFile.items[sectionLimits.end].key;
+      const lastSubItem = subIndex.items[subIndex.items.length - 1].key;
+      if (comparePaths(itemAfterSplit, lastSubItem) !== 1) return false;
+    }
+  }
+
+  // Insert the provided sub-index array
+  const preSection = indexFile.items.slice(0, sectionLimits.start);
+  const postSection = indexFile.items.slice(sectionLimits.end);
+  indexFile.items = [...preSection, ...subIndex.items, ...postSection];
+  return true;
 };
