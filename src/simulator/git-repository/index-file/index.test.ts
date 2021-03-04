@@ -98,3 +98,11 @@ test('Remove index entry', () => {
   expect(Index.remove(indexFile, ['dir1', 'file1'])).toBe(true);
   expect(Index.getEntry(indexFile, ['dir1', 'file1'])).toBe(null);
 });
+
+test('Get path section of index file', () => {
+  // @todo Write this test
+});
+
+test('Overwrite section of index file', () => {
+  // @todo Write this test
+});

@@ -1,3 +1,4 @@
+import { IndexFile } from './index-file/types';
 import { GitObjectAddress, GitObjectStorage } from './object-storage/types';
 import { GitRefStorage, RefPath } from './ref-storage/types';
 
@@ -26,5 +27,6 @@ export type GitHead = StableHead | DetachedHead;
 export interface GitRepository {
   objectStorage: GitObjectStorage;
   refStorage: GitRefStorage;
+  indexFile: IndexFile;
   head: GitHead;
 }

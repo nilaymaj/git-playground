@@ -2,7 +2,7 @@ import { FileSystemPath } from '../../file-system/types';
 import { Tree } from '../../utils/tree';
 import { IndexFile, IndexFileItem } from './types';
 
-type IndexTree = Tree<IndexFileItem, string>;
+export type IndexTree = Tree<IndexFileItem, string>;
 
 /**
  * From a sorted-array format index file, creates an index tree
