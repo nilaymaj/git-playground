@@ -100,7 +100,22 @@ test('Remove index entry', () => {
 });
 
 test('Get path section of index file', () => {
-  // @todo Write this test
+  const { indexFile } = createSampleIndex();
+
+  // Regular work day: return "prospective" section for non-existent paths
+  const section1 = Index.getPathSection(indexFile, ['dir2']);
+  expect(section1.start).toBe(3);
+  expect(section1.end).toBe(3);
+
+  // Regular work day: Section limits for directory
+  const section2 = Index.getPathSection(indexFile, ['dir1']);
+  expect(section2.start).toBe(0);
+  expect(section2.end).toBe(3);
+
+  // Regular work day: Section for single file
+  const section3 = Index.getPathSection(indexFile, ['file4']);
+  expect(section3.start).toBe(3);
+  expect(section3.end).toBe(4);
 });
 
 test('Overwrite section of index file', () => {

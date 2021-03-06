@@ -12,8 +12,6 @@ type Result = boolean[];
 /**
  * Removes files/directories at specified paths, similar to UNIX `rmdir`.
  * Returns boolean array denoting success state of each `rmdir` operation.
- *
- * @todo Add support for recursive flag
  */
 export const rm: Operation<Args, Result> = (system, args) => {
   return args.paths.map((path) => deleteItemAt(system.fileSystem, path));

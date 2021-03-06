@@ -35,7 +35,6 @@ export const checkout: Operation<Args, Result> = (system, args) => {
   system.repository.indexFile = newIndexFile;
 
   // Update HEAD
-  // @todo Fix this when checkout-to-ref is implemented
   system.repository.head.isDetached = true;
   system.repository.head.destination = args.commitHash;
 
