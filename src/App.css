@@ -1,38 +1,41 @@
+* {
+  box-sizing: border-box;
+}
+
 .App {
   text-align: center;
+  height: 100vh;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.pane-mosaic {
+  background-color: white;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.pane {
+  padding: 7px;
+  border-radius: 10px;
+  border: 3px solid black;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+.pane-header {
+  width: 100%;
+  padding: 7px;
+  border-radius: 5px;
+  font-size: large;
+  text-align: center;
+  font-weight: bold;
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.pane-body pre {
+  font-size: x-large;
+  text-align: left;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.pane.terminal-pane {
+  border-color: #3c4d63;
+  background-color: #3c4d63;
+  color: white;
 }
+
+@import '../node_modules/react-mosaic-component/react-mosaic-component.css';
