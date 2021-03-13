@@ -1,3 +1,5 @@
+import { List } from 'immutable';
+
 /**
  * A single item in the sorted array.
  */
@@ -23,7 +25,7 @@ type CompareFunction<K> = (a: K, b: K) => number;
  * - Delete item: `O(n)`
  */
 export type SortedArray<K, V> = {
-  items: SortedArrayItem<K, V>[];
+  items: List<SortedArrayItem<K, V>>;
   compareFn: CompareFunction<K>;
 };
 
@@ -40,11 +42,11 @@ export const create = <K, V>(
   items: { key: K; value: V }[] = [],
   isSorted?: boolean
 ): SortedArray<K, V> => {
-  if (items.length === 0) return { items: [], compareFn };
+  if (items.length === 0) return { items: List(), compareFn };
   return {
     items: isSorted
-      ? items
-      : items.sort((a, b) => {
+      ? List(items)
+      : List(items).sort((a, b) => {
           const result = compareFn(a.key, b.key);
           if (result === 0) throw new Error('Items with same key not allowed');
           return result;
@@ -67,7 +69,7 @@ export const getByKey = <K, V>(
   key: K | ((k: K) => number)
 ): { item: SortedArrayItem<K, V> | null; index: number } => {
   let lowIndex = 0;
-  let highIndex = array.items.length - 1;
+  let highIndex = array.items.size - 1;
 
   // Create a compare function that takes care of both `key` types
   const compareFn = (argKey: K) => {
@@ -78,7 +80,8 @@ export const getByKey = <K, V>(
   // Run binary search on the array
   while (lowIndex <= highIndex) {
     const midIndex = Math.floor((lowIndex + highIndex) / 2);
-    const item = array.items[midIndex];
+    const item = array.items.get(midIndex);
+    if (!item) throw new Error(`This shouldn't happen.`);
     const compared = compareFn(item.key);
 
     if (compared === 0) return { item, index: midIndex };
@@ -94,52 +97,66 @@ export const getByKey = <K, V>(
 /**
  * Inserts a new item into the sorted array at appropriate index.
  * If `upsert` is `true`, updates value if item with key exists.
- * Else, returns `false` if item with same key already exists.
+ * Else, returns `null` if item with same key already exists.
  */
 export const insert = <K, V>(
   array: SortedArray<K, V>,
   itemToInsert: SortedArrayItem<K, V>,
   upsert?: boolean
-): boolean => {
+): SortedArray<K, V> | null => {
   const { item, index } = getByKey(array, itemToInsert.key);
-  if (item && !upsert) return false;
-  else if (item) array.items[index] = itemToInsert;
-  else array.items.splice(index, 0, itemToInsert);
-  return true;
+  if (item && !upsert) return null;
+  else if (item) {
+    // `upsert` provided, so update existing time
+    const newItems = array.items.set(index, itemToInsert);
+    return { ...array, items: newItems };
+  } else {
+    // Insert new item at index
+    const newItems = array.items.insert(index, itemToInsert);
+    return { ...array, items: newItems };
+  }
 };
 
 /**
  * Updates the value of an existing item in sorted array.
  * If `upsert` is `true`, inserts item if it does not exist.
- * Else, returns `false` if item does not exist.
+ * Else, returns `null` if item does not exist.
  */
 export const update = <K, V>(
   array: SortedArray<K, V>,
   itemKey: K,
   newValue: V,
   upsert?: boolean
-): boolean => {
+): SortedArray<K, V> | null => {
   const { item, index } = getByKey(array, itemKey);
-  if (!item && !upsert) return false;
+  if (!item && !upsert) return null;
   else if (!item) {
+    // `upsert` provided, insert new item
     const newItem = { key: itemKey, value: newValue };
-    array.items.splice(index, 0, newItem);
-  } else array.items[index].value = newValue;
-  return true;
+    const newItems = array.items.insert(index, newItem);
+    return { ...array, items: newItems };
+  } else {
+    // Update existing item
+    const newItems = array.items.update(index, (item) => ({
+      ...item,
+      value: newValue,
+    }));
+    return { ...array, items: newItems };
+  }
 };
 
 /**
  * Deletes item with given key in sorted array.
- * Returns `false`, if item does not exist.
+ * Returns `null`, if item does not exist.
  */
 export const deleteItem = <K, V>(
   array: SortedArray<K, V>,
   itemKey: K
-): boolean => {
+): SortedArray<K, V> | null => {
   const { item, index } = getByKey(array, itemKey);
-  if (!item) return false;
-  array.items.splice(index, 1);
-  return true;
+  if (!item) return null;
+  const newItems = array.items.delete(index);
+  return { ...array, items: newItems };
 };
 
 /**
@@ -161,14 +178,16 @@ export const findRange = <K, V>(
   // Feel around to find the full range required
   let startIndex = index;
   while (startIndex > 0) {
-    const item = array.items[startIndex - 1];
+    const item = array.items.get(startIndex - 1);
+    if (!item) throw new Error(`This shouldn't happen.`);
     if (searchFn(item.key) === 0) --startIndex;
     else break;
   }
   // Find the subarray end index
   let endIndex = index;
-  while (endIndex < array.items.length) {
-    const item = array.items[endIndex];
+  while (endIndex < array.items.size) {
+    const item = array.items.get(endIndex);
+    if (!item) throw new Error(`This shouldn't happen.`);
     if (searchFn(item.key) === 0) ++endIndex;
     else break;
   }
