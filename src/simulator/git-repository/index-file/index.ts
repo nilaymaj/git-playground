@@ -57,21 +57,24 @@ export const createIndexFromFileTree = (
   fileTree: FileSystemNode,
   objectStorage: GitObjectStorage,
   basePath: FileSystemPath = []
-): IndexFile => {
+): { storage: GitObjectStorage; indexFile: IndexFile } => {
   // Serialize file tree into its leaves
   const fileTreeLeaves = isLeafNode(fileTree)
     ? [{ path: basePath, value: fileTree }]
     : serializeLeafs(fileTree, compareNames, basePath);
 
   // Convert file tree leaves to index file entries
+  let newObjectStorage = objectStorage;
   const indexEntries = fileTreeLeaves.map((leaf) => {
     const gitBlob: GitBlob = { type: 'blob', fileData: leaf.value };
-    const objectHash = writeObject(objectStorage, gitBlob);
-    return { key: leaf.path, value: { objectHash } };
+    const { storage: objS, hash } = writeObject(newObjectStorage, gitBlob);
+    newObjectStorage = objS;
+    return { key: leaf.path, value: { objectHash: hash } };
   });
 
   // Pack the entries into a SortedArray
-  return SortedArray.create(comparePaths, indexEntries);
+  const newIndexFile = SortedArray.create(comparePaths, indexEntries);
+  return { storage: newObjectStorage, indexFile: newIndexFile };
 };
 
 /**
@@ -119,26 +122,29 @@ export const getEntry = (
  * Updates the index entry at provided path.
  * Inserts entry if it does not exist.
  *
- * Returns `false` if given path is empty.
+ * Returns `null` if given path is empty.
  */
 export const upsert = (
   indexFile: IndexFile,
   path: FileSystemPath,
   value: IndexFileItem
-): boolean => {
-  if (path.length === 0) return false;
-  const result = SortedArray.update(indexFile, path, value, true);
-  if (!result) throw new Error(`Index upsert failed - this shouldn't happen!`);
-  return true;
+): IndexFile | null => {
+  if (path.length === 0) return null;
+  const newIndex = SortedArray.update(indexFile, path, value, true);
+  if (!newIndex) throw new Error(`Index upsert shouldn't fail!`);
+  return newIndex;
 };
 
 /**
  * Removes index entry at provided path.
  *
- * Returns `false` if entry does not exist.
+ * Returns `null` if entry does not exist.
  */
-export const remove = (indexFile: IndexFile, path: FileSystemPath): boolean => {
-  if (path.length === 0) return false;
+export const remove = (
+  indexFile: IndexFile,
+  path: FileSystemPath
+): IndexFile | null => {
+  if (path.length === 0) return null;
   return SortedArray.deleteItem(indexFile, path);
 };
 
@@ -175,29 +181,34 @@ export const overwriteSection = (
   indexFile: IndexFile,
   path: FileSystemPath,
   subIndex: IndexFile
-) => {
+): IndexFile | null => {
   // Find the section of index file to be overwritten
   const sectionLimits = getPathSection(indexFile, path);
 
   // Validate that provided sub-index file fits in
-  if (subIndex.items.length !== 0) {
+  if (subIndex.items.size !== 0) {
     if (sectionLimits.start > 0) {
       // Check the starting boundary
-      const itemBeforeSplit = indexFile.items[sectionLimits.start - 1].key;
-      const firstSubItem = subIndex.items[0].key;
-      if (comparePaths(itemBeforeSplit, firstSubItem) !== -1) return false;
+      const itemBeforeSplit = indexFile.items.get(sectionLimits.start - 1);
+      const firstSubItem = subIndex.items.get(0);
+      if (!itemBeforeSplit || !firstSubItem)
+        throw new Error(`This shouldn't happen!`);
+      if (comparePaths(itemBeforeSplit.key, firstSubItem.key) !== -1)
+        return null;
     }
-    if (sectionLimits.end < indexFile.items.length) {
+    if (sectionLimits.end < indexFile.items.size) {
       // Check the ending boundary
-      const itemAfterSplit = indexFile.items[sectionLimits.end].key;
-      const lastSubItem = subIndex.items[subIndex.items.length - 1].key;
-      if (comparePaths(itemAfterSplit, lastSubItem) !== 1) return false;
+      const itemAfterSplit = indexFile.items.get(sectionLimits.end);
+      const lastSubItem = subIndex.items.get(subIndex.items.size - 1);
+      if (!itemAfterSplit || !lastSubItem)
+        throw new Error(`This shouldn't happen!`);
+      if (comparePaths(itemAfterSplit.key, lastSubItem.key) !== 1) return null;
     }
   }
 
   // Insert the provided sub-index array
   const preSection = indexFile.items.slice(0, sectionLimits.start);
   const postSection = indexFile.items.slice(sectionLimits.end);
-  indexFile.items = [...preSection, ...subIndex.items, ...postSection];
-  return true;
+  const newIndexRawItems = [...preSection, ...subIndex.items, ...postSection];
+  return SortedArray.create(comparePaths, newIndexRawItems);
 };

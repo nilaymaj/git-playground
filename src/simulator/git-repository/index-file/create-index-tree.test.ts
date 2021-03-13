@@ -8,17 +8,18 @@ import { IndexFileItem } from './types';
 const validIndexFile = () => {
   const fs = createSampleFS();
   const objectStorage = createObjectStorage();
-  return Index.createIndexFromFileTree(fs, objectStorage);
+  return Index.createIndexFromFileTree(fs, objectStorage).indexFile;
 };
 
 const invalidIndexFile = () => {
   const fs = createSampleFS();
   const objectStorage = createObjectStorage();
-  const indexFile = Index.createIndexFromFileTree(fs, objectStorage);
-  Index.upsert(indexFile, ['dir1', 'file1', 'file5'], {
+  const { indexFile } = Index.createIndexFromFileTree(fs, objectStorage);
+  const newIndex = Index.upsert(indexFile, ['dir1', 'file1', 'file5'], {
     objectHash: 'foo',
   });
-  return indexFile;
+  if (!newIndex) throw new Error(`This shouldn't happen.`);
+  return newIndex;
 };
 
 test('Valid index file -> index tree', () => {

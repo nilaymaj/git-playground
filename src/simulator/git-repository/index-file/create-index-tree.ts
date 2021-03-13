@@ -18,14 +18,15 @@ export type IndexTree = Tree<IndexFileItem, string>;
  *     2. Else, recursively create index tree for chunk and attach to root tree.
  */
 export const createIndexTree = (index: IndexFile): IndexTree => {
-  const filePaths = index.items.map((entry) => entry.key);
+  const filePaths = index.items.toArray().map((entry) => entry.key);
   const chunks = getRootNameChunks(filePaths);
 
   return chunks.reduce((rootNode, chunk) => {
     // Check if chunk corresponds to file entry
     if (chunk.end - chunk.start === 1) {
       // Chunk may correspond to file entry...
-      const indexEntry = index.items[chunk.start];
+      const indexEntry = index.items.get(chunk.start);
+      if (!indexEntry) throw new Error(`This shouldn't happen.`);
       if (indexEntry.key.length === 1) {
         // Chunk corresponds to file entry: add leaf to index tree
         return rootNode.set(chunk.name, indexEntry.value);
