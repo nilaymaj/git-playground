@@ -20,6 +20,7 @@ const TerminalPane = () => {
     const terminal = terminalRef.current;
     if (!sandboxManager.value) throw new Error(`command executed w/o sandbox`);
     setTerminalHistory((oldHistory) => pushInput(oldHistory, input, '>'));
+    if (input === 'clear') return setTerminalHistory(startTerminal());
 
     const { system: newSystem } = terminal.execute(
       input,

@@ -34,7 +34,6 @@ class Terminal {
     print: (text: string) => void
   ): ExecResult => {
     const parsed = this.parser.parse(input);
-    console.log(parsed);
     if (!parsed) return { system, success: false };
 
     const commandUsed = PATH[parsed.command];
