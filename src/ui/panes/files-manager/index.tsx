@@ -1,5 +1,6 @@
 import { useFileSystem } from '../../mainframe/providers/sandbox-provider';
 import Pane from '../pane';
+import { FileSystemView } from './file-system-view';
 
 type Props = {};
 
@@ -8,7 +9,7 @@ const FileSystemPane = (props: Props) => {
 
   return (
     <Pane title='File System' accentColor='green'>
-      <pre>{JSON.stringify(fileSystem, undefined, 2)}</pre>
+      <FileSystemView fileSystem={fileSystem} />
     </Pane>
   );
 };
