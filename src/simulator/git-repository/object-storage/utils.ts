@@ -1,6 +1,7 @@
 import { GitObjectAddress, GitObjectStorage, GitBlob } from './types';
 import { Tree } from '../../utils/tree';
 import { readObject } from './index';
+import { OrderedMap } from 'immutable';
 
 export type SerializedGitTree = Tree<GitBlob, string>;
 
@@ -27,6 +28,7 @@ export const serializeGitTree = (
     if (subNode.type === 'blob') return mainNode.set(childName, subNode);
     // Recursively serialize subtrees, and attach to target tree
     const serializedSubTree = serializeGitTree(hash, storage);
+    if (!serializedSubTree) throw new Error(`This shouldn't happen.`);
     return mainNode.set(childName, serializedSubTree);
-  }, new Map());
+  }, OrderedMap() as SerializedGitTree);
 };

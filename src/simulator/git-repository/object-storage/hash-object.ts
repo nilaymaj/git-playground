@@ -22,7 +22,7 @@ export const hashObject = (object: GitObject): GitObjectAddress => {
  * Computes the SHA-1 hash of a Git blob object
  */
 export const hashBlobObject = (blob: GitBlob): GitObjectAddress => {
-  const { contentToken, version } = blob.fileData.contents;
+  const { contentToken, version } = blob.fileData;
   const finalToken = contentToken + ' ' + version.toString();
   return createHash(HASH_METHOD).update(finalToken).digest('hex');
 };
