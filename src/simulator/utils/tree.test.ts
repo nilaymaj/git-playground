@@ -1,3 +1,4 @@
+import { OrderedMap } from 'immutable';
 import * as Tree from './tree';
 
 type NumberTree = Tree.Tree<number, string>;
@@ -16,18 +17,18 @@ type NumberTreeInternalNode = Tree.TreeInternalNode<number, string>;
  * ```
  */
 const createSampleTree = (): NumberTree => {
-  const branchA = new Map<string, NumberTreeNode>([
+  const branchA = OrderedMap<string, NumberTreeNode>([
     ['n', 2],
     ['m', 1],
   ]);
-  const branchZ: NumberTree = new Map<string, NumberTreeNode>([['w', 5]]);
-  const branchB: NumberTree = new Map<string, NumberTreeNode>([
+  const branchZ: NumberTree = OrderedMap<string, NumberTreeNode>([['w', 5]]);
+  const branchB: NumberTree = OrderedMap<string, NumberTreeNode>([
     ['z', branchZ],
     ['x', 3],
     ['y', 4],
   ]);
   const branchC = 6;
-  return new Map<string, NumberTreeNode>([
+  return OrderedMap<string, NumberTreeNode>([
     ['c', branchC],
     ['a', branchA],
     ['b', branchB],
@@ -37,7 +38,7 @@ const createSampleTree = (): NumberTree => {
 test('isLeaf identifies leaves from internal nodes', () => {
   expect(Tree.isLeafNode(1)).toBe(true);
   expect(Tree.isLeafNode({})).toBe(true);
-  expect(Tree.isLeafNode(new Map())).toBe(false);
+  expect(Tree.isLeafNode(OrderedMap())).toBe(false);
 });
 
 test('Nodes are accessed by path', () => {
@@ -63,47 +64,79 @@ test('Nodes are accessed by path', () => {
 
 test('Leaves are inserted correctly', () => {
   const tree = createSampleTree();
-  // The happy path
-  expect(Tree.insertLeafAt(tree, ['a', 'o'], 2.5)).toBe(true);
-  expect(Tree.getNodeAt(tree, ['a', 'o'])).toBe(2.5);
-  expect(Tree.insertLeafAt(tree, ['b', 'u', 'v'], 10)).toBe(true);
-  expect(Tree.getNodeAt(tree, ['b', 'u', 'v'])).toBe(10);
-  // The bad paths
-  expect(Tree.insertLeafAt(tree, ['a'], 10)).toBe(false);
-  expect(Tree.insertLeafAt(tree, ['b', 'z', 'w', '?'], 20)).toBe(false);
+
+  // Regular work day: insert leaf at path under root
+  const newTree1 = Tree.insertNodeAt(tree, ['d'], 10);
+  expect(newTree1).not.toBe(null);
+  expect(Tree.getNodeAt(newTree1 as NumberTree, ['d'])).toBe(10);
+
+  // Regular work day: insert leaf at nested path
+  const newTree2 = Tree.insertNodeAt(tree, ['a', 'o'], 2.5);
+  expect(newTree2).not.toBeNull();
+  expect(Tree.getNodeAt(newTree2 as NumberTree, ['a', 'o'])).toBe(2.5);
+
+  // Can't insert leaf at path leading to internal node
+  expect(Tree.insertNodeAt(tree, ['a'], 10)).toBeNull();
+  // Can't insert leaf at path terminating prematurely
+  expect(Tree.insertNodeAt(tree, ['b', 'z', 'w', '?'], 20)).toBeNull();
+});
+
+test('Internal nodes are inserted correctly', () => {
+  const tree = createSampleTree();
+
+  // Regular work day: insert node at path under root
+  const newTree1 = Tree.insertNodeAt(tree, ['d']) as NumberTree;
+  expect(newTree1).not.toBeNull();
+  const newNode1 = Tree.getNodeAt(newTree1, ['d']) as NumberTree;
+  expect(newNode1).not.toBeNull();
+  expect(newNode1.toArray().length).toBe(0);
+
+  // Regular work day: insert node at nested path
+  const newTree2 = Tree.insertNodeAt(tree, ['a', 'o']) as NumberTree;
+  expect(newTree2).not.toBeNull();
+  const newNode2 = Tree.getNodeAt(newTree2, ['a', 'o']) as NumberTree;
+  expect(newNode2).not.toBeNull();
+  expect(newNode2.toArray().length).toBe(0);
 });
 
 test('Nodes are deleted correctly', () => {
   const tree = createSampleTree();
-  // The bad paths first...
-  expect(Tree.deleteNodeAt(tree, ['a', '?'])).toBe(false);
-  expect(Tree.deleteNodeAt(tree, ['b', 'x', '?'])).toBe(false);
-  expect(Tree.deleteNodeAt(tree, [])).toBe(false);
-  // ...and now the happy paths
-  // 1. Deleting leaf node at a -> n
-  expect(Tree.deleteNodeAt(tree, ['a', 'n'])).toBe(true);
-  expect(Tree.getNodeAt(tree, ['a'])).not.toBeNull();
-  expect(Tree.getNodeAt(tree, ['a', 'm'])).not.toBeNull();
-  expect(Tree.getNodeAt(tree, ['a', 'n'])).toBeNull();
-  // 2. Deleting internal node at b -> z
-  expect(Tree.deleteNodeAt(tree, ['b', 'z'])).toBe(true);
-  expect(Tree.getNodeAt(tree, ['b'])).not.toBeNull();
-  expect(Tree.getNodeAt(tree, ['b', 'x'])).not.toBeNull();
-  expect(Tree.getNodeAt(tree, ['b', 'z'])).toBeNull();
+
+  // Regular work day: deleting leaf node at a -> n
+  const newTree1 = Tree.deleteNodeAt(tree, ['a', 'n']) as NumberTree;
+  expect(newTree1).not.toBeNull();
+  expect(Tree.getNodeAt(newTree1, ['a'])).not.toBeNull();
+  expect(Tree.getNodeAt(newTree1, ['a', 'm'])).toBe(1);
+  expect(Tree.getNodeAt(newTree1, ['a', 'n'])).toBeNull();
+
+  // Regular work day: deleting internal node at b -> z
+  const newTree2 = Tree.deleteNodeAt(tree, ['b', 'z']) as NumberTree;
+  expect(newTree2).not.toBeNull();
+  expect(Tree.getNodeAt(newTree2, ['b'])).not.toBeNull();
+  expect(Tree.getNodeAt(newTree2, ['b', 'x'])).toBe(3);
+  expect(Tree.getNodeAt(newTree2, ['b', 'y'])).toBe(4);
+  expect(Tree.getNodeAt(newTree2, ['b', 'z'])).toBeNull();
+
+  // Can't delete nodes that don't exist
+  expect(Tree.deleteNodeAt(tree, ['a', '?'])).toBeNull();
+  expect(Tree.deleteNodeAt(tree, ['b', 'x', '?'])).toBeNull();
+  // Can't delete the root node
+  expect(Tree.deleteNodeAt(tree, [])).toBeNull();
 });
 
 test('Leafs are updated correctly', () => {
   const tree = createSampleTree();
-  // The bad paths first...
-  expect(Tree.updateLeafAt(tree, [], 5)).toBe(false);
-  expect(Tree.updateLeafAt(tree, ['a'], 5)).toBe(false);
-  expect(Tree.updateLeafAt(tree, ['c', '?'], 5)).toBe(false);
-  // ... and now the happy paths
-  // 1. Update value at a -> m
-  expect(Tree.updateLeafAt(tree, ['a', 'm'], 1.5)).toBe(true);
-  expect(Tree.getNodeAt(tree, ['a', 'm'])).toBe(1.5);
-  // 2. Upsert value at b -> z -> v
-  expect(Tree.updateLeafAt(tree, ['b', 'z', 'v'], 4.5)).toBe(false);
+
+  // Can't update leafs that don't exist
+  expect(Tree.updateLeafAt(tree, [], 5)).toBe(null);
+  expect(Tree.updateLeafAt(tree, ['a'], 5)).toBe(null);
+  expect(Tree.updateLeafAt(tree, ['c', '?'], 5)).toBe(null);
+  expect(Tree.updateLeafAt(tree, ['b', 'z', 'v'], 4.5)).toBe(null);
+
+  // Regular work day: update value at a -> m
+  const newTree = Tree.updateLeafAt(tree, ['a', 'm'], 1.5) as NumberTree;
+  expect(newTree).not.toBeNull();
+  expect(Tree.getNodeAt(newTree, ['a', 'm'])).toBe(1.5);
 });
 
 test('Tree conversion works', () => {
@@ -139,13 +172,14 @@ test('Tree serialization works', () => {
 
 test('Tree comparison works', () => {
   const baseTree = createSampleTree();
-  const otherTree = createSampleTree();
+  let otherTree: NumberTree = createSampleTree();
 
   // Make some changes to other tree
-  Tree.updateLeafAt(otherTree, ['a', 'm'], -1);
-  Tree.deleteNodeAt(otherTree, ['b', 'z']);
-  Tree.insertLeafAt(otherTree, ['d', 'd1'], 7);
-  Tree.insertLeafAt(otherTree, ['d', 'd2'], 8);
+  otherTree = Tree.updateLeafAt(otherTree, ['a', 'm'], -1) as NumberTree;
+  otherTree = Tree.deleteNodeAt(otherTree, ['b', 'z']) as NumberTree;
+  otherTree = Tree.insertNodeAt(otherTree, ['d']) as NumberTree;
+  otherTree = Tree.insertNodeAt(otherTree, ['d', 'd1'], 7) as NumberTree;
+  otherTree = Tree.insertNodeAt(otherTree, ['d', 'd2'], 8) as NumberTree;
 
   // Check the differences
   const differences = Tree.compareTrees(baseTree, otherTree);

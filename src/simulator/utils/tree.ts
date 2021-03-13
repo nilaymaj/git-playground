@@ -1,3 +1,5 @@
+import { OrderedMap } from 'immutable';
+
 /**
  * The root of the tree.
  * - L: the type of leaf node
@@ -9,7 +11,7 @@ export type Tree<L, N> = TreeInternalNode<L, N>;
  * An internal node of the tree, containing
  * named references to children
  */
-export type TreeInternalNode<L, N> = Map<N, TreeNode<L, N>>;
+export type TreeInternalNode<L, N> = OrderedMap<N, TreeNode<L, N>>;
 
 /**
  * A general node of the tree. May be internal or leaf node.
@@ -21,20 +23,6 @@ export type TreeNode<L, N> = L | TreeInternalNode<L, N>;
  * are segment names in the path.
  */
 export type TreePath<N> = N[];
-
-/**
- * Creates a linear tree that only includes a leaf
- * node corresponding to the specified path.
- */
-const createTreeNodeFromLeaf = <L, N>(
-  path: TreePath<N>,
-  value: L
-): TreeNode<L, N> => {
-  if (path.length === 0) return value;
-  const [childName, ...subPath] = path;
-  const subTree = createTreeNodeFromLeaf(subPath, value);
-  return new Map([[childName, subTree]]);
-};
 
 /**
  * Traverses given tree node to return node located at given path.
@@ -55,7 +43,7 @@ const getNodeInSubtree = <L, N>(
  * Check if given node is leaf node
  */
 export const isLeafNode = <L, N>(node: TreeNode<L, N>): node is L => {
-  return !(node instanceof Map);
+  return !(node instanceof OrderedMap);
 };
 
 /**
@@ -71,71 +59,66 @@ export const getNodeAt = <L, N>(
 
 /**
  * Inserts new leaf node with given value at specified path.
- * Creates path if does not exist already.
+ * (parent node must exist)
  *
- * Returns `true` on success, fails if path leads to internal
- * node or terminates prematurely at another leaf node.
+ * Returns new Tree on success, returns `null` if path leads to
+ * existing node or terminates prematurely at another leaf node.
  */
-export const insertLeafAt = <L, N>(
+export const insertNodeAt = <L, N>(
   tree: Tree<L, N>,
   path: TreePath<N>,
-  value: L
-): boolean => {
-  const [childName, ...subPath] = path;
-  const subNode = tree.get(childName);
-  if (!subNode) {
-    // Create subtree of node to be created
-    const subTree = createTreeNodeFromLeaf(subPath, value);
-    // Attach subtree to current node, and done.
-    tree.set(childName, subTree);
-    return true;
-  }
-  if (isLeafNode(subNode)) return false;
-  // If path terminates at leaf node, abort
-  if (subPath.length === 0) return false;
-  // Else recurse into the subtree
-  return insertLeafAt(subNode, subPath, value);
+  value?: L
+): Tree<L, N> | null => {
+  // Check if parent node is valid
+  const parentPath = path.slice(0, -1);
+  const parentNode = getNodeAt(tree, parentPath);
+  if (!parentNode || isLeafNode(parentNode)) return null;
+  // Check if leaf already exists at path
+  const leafName = path[path.length - 1];
+  if (parentNode.has(leafName)) return null;
+  // Insert leaf and return new tree
+  return tree.setIn(path, value || OrderedMap());
 };
 
 /**
  * Deletes subtree (or leaf) at given path.
- * Return true on success, fails if path is invalid.
+ * Returns new Tree on success, `null` if path is invalid.
  */
-export const deleteNodeAt = <L, N>(tree: Tree<L, N>, path: TreePath<N>) => {
+export const deleteNodeAt = <L, N>(
+  tree: Tree<L, N>,
+  path: TreePath<N>
+): Tree<L, N> | null => {
   // Self-destruction is not allowed
-  if (path.length === 0) return false;
+  if (path.length === 0) return null;
   // Traverse and get parent of required node
-  const parentNode = getNodeAt(tree, path.slice(0, -1));
-  if (!parentNode || isLeafNode(parentNode)) return false;
-  // Delete given child
-  const childName = path[path.length - 1];
-  return parentNode.delete(childName);
+  const nodeToDelete = getNodeAt(tree, path);
+  if (!nodeToDelete) return null;
+  // Delete node at specified path
+  return tree.deleteIn(path);
 };
 
 /**
- * Updates tree leaf located at given path.
- * If `upsert` is true, inserts leaf if does not exist
+ * Updates tree leaf located at given path
  * (parent node must exist)
  *
- * Returns true on success, fails if path is invalid.
+ * Returns new Tree on success, `null` if path is invalid.
  */
 export const updateLeafAt = <L, N>(
   tree: Tree<L, N>,
   path: TreePath<N>,
   value: L
-): boolean => {
+): Tree<L, N> | null => {
   // Root is not a leaf
-  if (path.length === 0) return false;
+  if (path.length === 0) return null;
   // Traverse and get parent of required node
   const parentNode = getNodeAt(tree, path.slice(0, -1));
-  if (!parentNode || isLeafNode(parentNode)) return false;
+  if (!parentNode || isLeafNode(parentNode)) return null;
   // Update or insert child
   const childName = path[path.length - 1];
   const childLeaf = parentNode.get(childName);
-  if (!childLeaf) return false;
-  if (childLeaf && !isLeafNode(childLeaf)) return false;
-  parentNode.set(childName, value);
-  return true;
+  if (!childLeaf) return null;
+  if (childLeaf && !isLeafNode(childLeaf)) return null;
+  return tree.updateIn(path, 0, () => value);
 };
 
 /**
@@ -146,11 +129,10 @@ export const convertTree = <Ls, Ld, N>(
   sourceTree: Tree<Ls, N>,
   convert: (leaf: Ls) => Ld
 ): Tree<Ld, N> => {
-  return Array.from(sourceTree).reduce((destNode, child) => {
-    const [childName, subTree] = child;
-    if (isLeafNode(subTree)) return destNode.set(childName, convert(subTree));
-    else return destNode.set(childName, convertTree(subTree, convert));
-  }, new Map());
+  return sourceTree.map((node) => {
+    if (isLeafNode(node)) return convert(node);
+    return convertTree(node, convert);
+  });
 };
 
 /**
