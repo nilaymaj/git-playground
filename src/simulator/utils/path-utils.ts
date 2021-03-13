@@ -12,3 +12,11 @@ export const isPrefix = (fullPath: FileSystemPath, prefix: FileSystemPath) => {
   }
   return true;
 };
+
+/**
+ * Parses a string into the file system path it represents
+ */
+export const parsePathString = (pathString: string): FileSystemPath => {
+  const segments = pathString.split('/');
+  return segments;
+};

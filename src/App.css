@@ -7,6 +7,10 @@
   height: 100vh;
 }
 
+/************************
+  PANE AND MOSAIC STYLE 
+************************/
+
 .pane-mosaic {
   background-color: white;
 }
@@ -27,6 +31,10 @@
   color: white;
 }
 
+.pane-body {
+  height: 100%;
+}
+
 .pane-body pre {
   font-size: x-large;
   text-align: left;
@@ -36,6 +44,62 @@
   border-color: #3c4d63;
   background-color: #3c4d63;
   color: white;
+}
+
+/************************
+  TERMINAL 
+************************/
+
+.terminal-container {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  height: 100%;
+}
+
+.terminal-row {
+  width: 100%;
+  text-align: left;
+  font-size: 1.3em;
+}
+
+.terminal-row-prompt {
+  color: #0f9af7;
+  margin-right: 5px;
+}
+
+.terminal-data {
+  flex-grow: 1;
+}
+
+.terminal-input {
+  flex-grow: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+
+  padding-top: 5px;
+  border-top: 1px solid #aaaaaa55;
+}
+
+.terminal-input .prompt {
+  flex-grow: 0;
+  font-size: 1.5em;
+  padding: 0 10px;
+  color: #0f9af7;
+}
+
+.terminal-input input {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+
+  caret-color: #bbb;
+  color: white;
+
+  font-family: inherit;
+  font-size: 1.3em;
 }
 
 @import '../node_modules/react-mosaic-component/react-mosaic-component.css';
