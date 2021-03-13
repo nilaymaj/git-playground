@@ -1,4 +1,9 @@
+import CpCommand from '../operations/file-system/cp';
 import CreateCommand from '../operations/file-system/create';
+import EditCommand from '../operations/file-system/edit';
+import MkdirCommand from '../operations/file-system/mkdir';
+import MvCommand from '../operations/file-system/mv';
+import RmCommand from '../operations/file-system/rm';
 import { SandboxState } from '../types';
 import Parser, { BinPath } from './parser';
 
@@ -9,6 +14,11 @@ type ExecResult = {
 
 const PATH: BinPath = {
   create: new CreateCommand(),
+  edit: new EditCommand(),
+  mkdir: new MkdirCommand(),
+  rm: new RmCommand(),
+  cp: new CpCommand(),
+  mv: new MvCommand(),
 };
 
 class Terminal {

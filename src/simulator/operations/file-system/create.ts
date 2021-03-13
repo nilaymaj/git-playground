@@ -22,7 +22,6 @@ const createOptions: CommandOptions<CreateOptions> = {
 
 /**
  * Creates new files at specified paths, similar to UNIX `touch`.
- * Returns boolean array denoting success state of each `create` operation.
  */
 class CreateCommand implements Command<CreateOptions> {
   name = 'create';

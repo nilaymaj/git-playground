@@ -1,20 +1,49 @@
-import { FileSystemPath } from '../../file-system/types';
-
-import { Operation } from '../types';
+import {
+  Command,
+  CommandExecReturn,
+  CommandOptions,
+  CommandOptionsProfile,
+  CommandOptionValues,
+} from '../types';
 import { createItemAt } from '../../file-system/index';
+import { SandboxState } from '../../types';
+import { parsePathString } from '../../utils/path-utils';
 
-type Args = {
-  paths: FileSystemPath[];
-};
+interface MkdirOptions extends CommandOptionsProfile {}
 
-type Result = boolean[];
+const mkdirOptions: CommandOptions<MkdirOptions> = {};
 
 /**
- * Creates new directories at specified paths, similar to UNIX `mkdir`.
- * Returns boolean array denoting success state of each `mkdir` operation.
+ * Creates new empty directory at specified paths, similar to UNIX `mkdir`
  */
-export const mkdir: Operation<Args, Result> = (system, args) => {
-  return args.paths.map((path) =>
-    createItemAt(system.fileSystem, path, 'directory')
-  );
-};
+export default class MkdirCommand implements Command<MkdirOptions> {
+  name = 'mkdir';
+  options = mkdirOptions;
+
+  execute = (
+    system: SandboxState,
+    print: (text: string) => void,
+    _opts: CommandOptionValues<MkdirOptions>,
+    args: string[]
+  ): CommandExecReturn => {
+    const paths = args.map(parsePathString);
+    if (paths.length === 0) {
+      // No paths provided
+      print('missing path operand');
+      return { system, success: false };
+    }
+
+    let currentFS = system.fileSystem;
+    for (const path of paths) {
+      // Execute `mkdir` for this path
+      const newFS = createItemAt(currentFS, path, 'directory');
+      if (!newFS) {
+        print(`'${path}': no such file or directory`);
+        return { system: { ...system, fileSystem: currentFS }, success: false };
+      }
+      currentFS = newFS;
+    }
+
+    return { system: { ...system, fileSystem: currentFS }, success: true };
+  };
+}
