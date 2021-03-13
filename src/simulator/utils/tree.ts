@@ -25,6 +25,11 @@ export type TreeNode<L, N> = L | TreeInternalNode<L, N>;
 export type TreePath<N> = N[];
 
 /**
+ * Create a new empty tree
+ */
+export const create = <L, N>() => OrderedMap<N, TreeNode<L, N>>();
+
+/**
  * Traverses given tree node to return node located at given path.
  * Returns `null` if path is invalid.
  */
@@ -58,7 +63,8 @@ export const getNodeAt = <L, N>(
 };
 
 /**
- * Inserts new leaf node with given value at specified path.
+ * Inserts provided node at specified path.
+ * If node is not provided, inserts empty subtree.
  * (parent node must exist)
  *
  * Returns new Tree on success, returns `null` if path leads to
@@ -67,8 +73,9 @@ export const getNodeAt = <L, N>(
 export const insertNodeAt = <L, N>(
   tree: Tree<L, N>,
   path: TreePath<N>,
-  value?: L
+  node?: L | TreeInternalNode<L, N>
 ): Tree<L, N> | null => {
+  if (path.length === 0) return null;
   // Check if parent node is valid
   const parentPath = path.slice(0, -1);
   const parentNode = getNodeAt(tree, parentPath);
@@ -77,7 +84,7 @@ export const insertNodeAt = <L, N>(
   const leafName = path[path.length - 1];
   if (parentNode.has(leafName)) return null;
   // Insert leaf and return new tree
-  return tree.setIn(path, value || OrderedMap());
+  return tree.setIn(path, node || OrderedMap());
 };
 
 /**

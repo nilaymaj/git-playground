@@ -1,5 +1,5 @@
 import { FileSystemPath } from '../../file-system/types';
-import { Tree } from '../../utils/tree';
+import { create, Tree } from '../../utils/tree';
 import { IndexFile, IndexFileItem } from './types';
 
 export type IndexTree = Tree<IndexFileItem, string>;
@@ -41,7 +41,7 @@ export const createIndexTree = (index: IndexFile): IndexTree => {
     const subIndexTree = createIndexTree(subIndex);
     // Attach sub-index tree to root node
     return rootNode.set(chunk.name, subIndexTree);
-  }, new Map() as Tree<IndexFileItem, string>);
+  }, create() as Tree<IndexFileItem, string>);
 };
 
 /**

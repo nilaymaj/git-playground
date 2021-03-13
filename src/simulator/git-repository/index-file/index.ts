@@ -67,8 +67,7 @@ export const createIndexFromFileTree = (
   const indexEntries = fileTreeLeaves.map((leaf) => {
     const gitBlob: GitBlob = { type: 'blob', fileData: leaf.value };
     const objectHash = writeObject(objectStorage, gitBlob);
-    const indexValue = { lastModified: leaf.value.lastModified, objectHash };
-    return { key: leaf.path, value: indexValue };
+    return { key: leaf.path, value: { objectHash } };
   });
 
   // Pack the entries into a SortedArray
@@ -96,11 +95,7 @@ export const createIndexFromGitTree = (
   const indexEntries = gitBlobLeaves.map((leaf) => {
     const gitBlob = leaf.value;
     const objectHash = hashBlobObject(gitBlob);
-    const indexValue = {
-      lastModified: gitBlob.fileData.lastModified,
-      objectHash,
-    };
-    return { key: leaf.path, value: indexValue };
+    return { key: leaf.path, value: { objectHash } };
   });
 
   // Pack the entries into a SortedArray

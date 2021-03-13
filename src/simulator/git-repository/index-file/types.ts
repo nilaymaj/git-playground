@@ -3,7 +3,6 @@ import { SortedArray } from '../../utils/sorted-array';
 import { GitObjectAddress } from '../object-storage/types';
 
 export interface IndexFileItem {
-  lastModified: Date;
   objectHash: GitObjectAddress;
 }
 

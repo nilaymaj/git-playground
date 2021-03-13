@@ -16,7 +16,6 @@ const invalidIndexFile = () => {
   const objectStorage = createObjectStorage();
   const indexFile = Index.createIndexFromFileTree(fs, objectStorage);
   Index.upsert(indexFile, ['dir1', 'file1', 'file5'], {
-    lastModified: new Date(),
     objectHash: 'foo',
   });
   return indexFile;

@@ -2,7 +2,7 @@ import { GitObjectAddress } from '../object-storage/types';
 import {
   deleteNodeAt,
   getNodeAt,
-  insertLeafAt,
+  insertNodeAt,
   isLeafNode,
 } from '../../utils/tree';
 import { GitRefStorage, RefPath, RefTreeNode } from './types';
@@ -46,7 +46,7 @@ export const createRefAt = (
   commitHash: GitObjectAddress
 ): boolean => {
   if (path.length === 0) return false;
-  return insertLeafAt(storage.branchHeads, path, commitHash);
+  return insertNodeAt(storage.branchHeads, path, commitHash);
 };
 
 /**

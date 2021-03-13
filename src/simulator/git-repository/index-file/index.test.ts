@@ -64,7 +64,7 @@ test('Get index entry', () => {
 
 test('Upsert entry at path', () => {
   const { indexFile } = createSampleIndex();
-  const sampleEntry = { lastModified: new Date(), objectHash: 'foo' };
+  const sampleEntry = { objectHash: 'foo' };
 
   // Can't have index entry at root
   expect(Index.upsert(indexFile, [], sampleEntry)).toBe(false);
