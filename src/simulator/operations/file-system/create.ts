@@ -25,7 +25,7 @@ const createOptions: CommandOptions<CreateOptions> = {
  * Returns boolean array denoting success state of each `create` operation.
  */
 class CreateCommand implements Command<CreateOptions> {
-  name = 'cp';
+  name = 'create';
   options = createOptions;
 
   parse = (args: string[]) => {
@@ -34,18 +34,30 @@ class CreateCommand implements Command<CreateOptions> {
 
   execute = (
     system: SandboxState,
+    print: (text: string) => void,
     opts: CommandOptionValues<CreateOptions>,
     args: string[]
   ) => {
-    if (opts.throwErr) console.error('throwErr was passed!');
+    if (opts.throwErr) print('throwErr was passed!');
     const paths = this.parse(args);
-    if (paths.length === 0) return false;
-
-    for (const path of paths) {
-      const result = createItemAt(system.fileSystem, path, 'file');
-      if (!result) return false;
+    console.log(paths);
+    if (paths.length === 0) {
+      console.log('no file paths provided');
+      print('no file paths provided');
+      return { system, success: false };
     }
-    return true;
+
+    let currentFS = system.fileSystem;
+    for (const path of paths) {
+      const newFS = createItemAt(currentFS, path, 'file');
+      if (!newFS) {
+        print(`path "${path}" does not exist`);
+        return { system: { ...system, fileSystem: currentFS }, success: false };
+      }
+      currentFS = newFS;
+    }
+    const newSystem = { ...system, fileSystem: currentFS };
+    return { system: newSystem, success: true };
   };
 }
 
