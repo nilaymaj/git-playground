@@ -1,14 +1,9 @@
 import { Tree, TreeInternalNode, TreeNode, TreePath } from '../utils/tree';
 
-interface FileContents {
+export type FileBlob = {
   contentToken: string;
   version: number;
-}
-
-export interface FileBlob {
-  contents: FileContents;
-  lastModified: Date;
-}
+};
 
 export type FileName = string;
 export type FileSystem = Tree<FileBlob, FileName>;

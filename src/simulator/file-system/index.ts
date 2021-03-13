@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { getNodeAt, isLeafNode } from '../utils/tree';
+import * as Tree from '../utils/tree';
 import { FileSystem, FileBlob, FileSystemPath, FileSystemNode } from './types';
 
 /**
@@ -8,18 +8,15 @@ import { FileSystem, FileBlob, FileSystemPath, FileSystemNode } from './types';
  * @param {string} [token] Sets unique content token to provided string. Use ONLY for testing purposes.
  */
 export const generateFileBlob = (token?: string): FileBlob => ({
-  lastModified: new Date(),
-  contents: {
-    contentToken: token || uuid(),
-    version: 0,
-  },
+  contentToken: token || uuid(),
+  version: 0,
 });
 
 /**
  * Creates a new blank file system
  */
 export const createFileSystem = (): FileSystem => {
-  return new Map();
+  return Tree.create();
 };
 
 /**
@@ -30,7 +27,7 @@ export const getItemAt = (
   fileSystem: FileSystem,
   path: FileSystemPath
 ): FileSystemNode | null => {
-  return getNodeAt(fileSystem, path);
+  return Tree.getNodeAt(fileSystem, path);
 };
 
 /**
@@ -43,18 +40,9 @@ export const createItemAt = (
   fileSystem: FileSystem,
   path: FileSystemPath,
   type: 'file' | 'directory'
-): boolean => {
-  if (path.length === 0) return false;
-  // Follow path to get nesting directory
-  const directory = getItemAt(fileSystem, path.slice(0, -1));
-  if (!directory || isLeafNode(directory)) return false;
-  // Check if item with same name already exists
-  const itemName = path[path.length - 1];
-  if (directory.has(itemName)) return false;
-  // Add new file to file system
-  const item = type === 'file' ? generateFileBlob() : new Map();
-  directory.set(itemName, item);
-  return true;
+): FileSystem | null => {
+  const item = type === 'file' ? generateFileBlob() : undefined;
+  return Tree.insertNodeAt(fileSystem, path, item);
 };
 
 /**
@@ -64,29 +52,23 @@ export const createItemAt = (
 export const deleteItemAt = (
   fileSystem: FileSystem,
   path: FileSystemPath
-): boolean => {
-  if (path.length === 0) return false;
-  // Follow path to get nesting directory
-  const directory = getItemAt(fileSystem, path.slice(0, -1));
-  if (!directory || isLeafNode(directory)) return false;
-  // Delete item and return success status
-  const itemName = path[path.length - 1];
-  return directory.delete(itemName);
+): FileSystem | null => {
+  return Tree.deleteNodeAt(fileSystem, path);
 };
 
 /**
  * Bump file version at given path in file system.
- * Returns true on success, false if path invalid.
+ * Returns new FS on success, `null` if path invalid.
  */
 export const bumpFileVersionAt = (
   fileSystem: FileSystem,
   path: FileSystemPath
-): boolean => {
-  if (path.length === 0) return false;
+): FileSystem | null => {
+  if (path.length === 0) return null;
   const file = getItemAt(fileSystem, path);
-  if (!file || !isLeafNode(file)) return false;
-  file.contents.version += 1;
-  return true;
+  if (!file || !Tree.isLeafNode(file)) return null;
+  const newFile = { ...file, version: file.version + 1 };
+  return Tree.updateLeafAt(fileSystem, path, newFile);
 };
 
 /**
@@ -106,30 +88,29 @@ export const moveItem = (
   srcPath: FileSystemPath,
   destPath: FileSystemPath,
   preserveSrc?: boolean
-): boolean => {
+): FileSystem | null => {
   // Validate source and destination paths
-  if (srcPath.length === 0) return false;
-  if (destPath.length === 0) return false;
+  if (srcPath.length === 0) return null;
+  if (destPath.length === 0) return null;
 
   // Check if the item exists
   const item = getItemAt(fileSystem, srcPath);
-  if (!item) return false;
+  if (!item) return null;
 
   // Check if destination path is valid
   const destDirPath = destPath.slice(0, -1);
   const destDir = getItemAt(fileSystem, destDirPath);
-  if (!destDir || isLeafNode(destDir)) return false;
+  if (!destDir || Tree.isLeafNode(destDir)) return null;
 
   // Make a copy of the item and move it
-  const destItemName = destPath[destPath.length - 1];
-  const itemCopy = isLeafNode(item) ? { ...item } : new Map(Array.from(item));
-  destDir.set(destItemName, itemCopy);
+  // 1. Remove the node already existing at destination
+  let fsWithoutDest = Tree.deleteNodeAt(fileSystem, destPath);
+  if (!fsWithoutDest) fsWithoutDest = fileSystem;
+  // 2. Add the source item to the destination
+  const destItem = Tree.isLeafNode(item) ? { ...item } : item;
+  const newFS = Tree.insertNodeAt(fsWithoutDest, destPath, destItem);
+  if (!newFS) throw new Error(`This shouldn't happen.`);
 
-  // Remove the source item
-  const srcDirPath = srcPath.slice(0, -1);
-  const srcDir = getItemAt(fileSystem, srcDirPath);
-  if (!srcDir || isLeafNode(srcDir))
-    throw new Error('Something illegal just happened.');
-  if (!preserveSrc) srcDir.delete(srcPath[srcPath.length - 1]);
-  return true;
+  // Remove the source item if required
+  return preserveSrc ? newFS : Tree.deleteNodeAt(newFS, srcPath);
 };
