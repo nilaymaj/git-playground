@@ -5,10 +5,12 @@ import { SandboxState } from '../../../simulator/types';
 const sampleSandbox = createNewSandbox();
 export const SandboxContext = React.createContext<SandboxManager>({
   value: sampleSandbox,
+  setSandbox: () => {},
 });
 
 type SandboxManager = {
   value: SandboxState | null;
+  setSandbox: (newSandbox: SandboxState) => void;
 };
 
 type Props = {
@@ -29,6 +31,7 @@ export const SandboxProvider = (props: Props) => {
   const sandboxManager = React.useMemo(
     () => ({
       value: sandbox,
+      setSandbox,
     }),
     [sandbox]
   );

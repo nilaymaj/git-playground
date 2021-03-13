@@ -23,16 +23,19 @@ export const getHeadCommit = (
 /**
  * Updates the current HEAD to a new commit hash.
  * If HEAD is stable (not detached), updates ref.
+ *
+ * Fails and returns `null`, if stable HEAD does not
+ * point to a valid ref.
  */
 export const updateHead = (
   head: GitHead,
   refStorage: GitRefStorage,
   commitHash: GitObjectAddress
-): boolean => {
+): GitRefStorage | null => {
   if (head.isDetached) {
     // Detached head: update directly
     head.destination = commitHash;
-    return true;
+    return refStorage;
   } else {
     // Stable head: update the ref pointed to by head
     const refAddress = head.destination;

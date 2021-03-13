@@ -60,7 +60,14 @@
 .terminal-row {
   width: 100%;
   text-align: left;
-  font-size: 1.3em;
+  font-size: 1.2em;
+  color: #aaa;
+}
+
+.terminal-row.prompt {
+  margin-top: 10px;
+  margin-bottom: 5px;
+  color: white;
 }
 
 .terminal-row-prompt {

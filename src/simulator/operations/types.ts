@@ -41,6 +41,11 @@ export type CommandOptionValues<T extends CommandOptionsProfile> = {
   [K in keyof T]?: StringToType[T[K]];
 };
 
+export type CommandExecReturn = {
+  system: SandboxState;
+  success: boolean;
+};
+
 /**
  * Represents a CLI command callable through the virtual terminal.
  *
@@ -53,7 +58,8 @@ export interface Command<T extends CommandOptionsProfile> {
 
   execute(
     system: SandboxState,
+    print: (text: string) => void,
     opts: CommandOptionValues<T>,
     args: string[]
-  ): boolean;
+  ): CommandExecReturn;
 }

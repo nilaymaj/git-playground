@@ -1,3 +1,5 @@
+import clsx from 'classnames';
+
 type Props = {
   text: string;
   prompt?: string;
@@ -8,8 +10,10 @@ type Props = {
  * of terminal input or output.
  */
 const TerminalRow = (props: Props) => {
+  const classes = clsx('terminal-row', { prompt: !!props.prompt });
+
   return (
-    <div className='terminal-row'>
+    <div className={classes}>
       {props.prompt && (
         <span className='terminal-row-prompt'>{props.prompt}</span>
       )}

@@ -18,8 +18,8 @@ export const TerminalInput = (props: Props) => {
       if (event.key !== 'Enter') return;
       const trimmedInput = input.trim();
       if (trimmedInput === '') return;
-      onInput(trimmedInput);
       setInput('');
+      onInput(trimmedInput);
     };
     document.addEventListener('keyup', handler);
     return () => document.removeEventListener('keyup', handler);
