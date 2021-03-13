@@ -1,4 +1,5 @@
 import { FileBlob } from '../../file-system/types';
+import { Map as IMMap } from 'immutable';
 
 /**
  * A simple Git blob, representing the contents of a single file
@@ -37,7 +38,7 @@ export type GitObject = GitBlob | GitTree | GitCommit;
  * Git's "content-addressable filesystem",
  * a mapping from SHA-1 hashes to Git objects
  */
-export type GitObjectStorage = Map<string, GitObject>;
+export type GitObjectStorage = IMMap<string, GitObject>;
 
 /**
  * The SHA-1 address to a Git object.

@@ -1,3 +1,4 @@
+import { Map } from 'immutable';
 import { hashObject } from './hash-object';
 import { GitObjectStorage, GitObject, GitObjectAddress } from './types';
 
@@ -25,7 +26,7 @@ import { GitObjectStorage, GitObject, GitObjectAddress } from './types';
  * Create an empty instance of Git object storage
  */
 export const createObjectStorage = (): GitObjectStorage => {
-  return new Map();
+  return Map();
 };
 
 /**
@@ -48,10 +49,10 @@ export const readObject = (
 export const writeObject = (
   storage: GitObjectStorage,
   object: GitObject
-): GitObjectAddress => {
+): { storage: GitObjectStorage; hash: GitObjectAddress } => {
   const hash = hashObject(object);
-  storage.set(hash, object);
-  return hash;
+  const newStorage = storage.set(hash, object);
+  return { storage: newStorage, hash };
 };
 
 /**
@@ -61,6 +62,7 @@ export const writeObject = (
 export const deleteObject = (
   storage: GitObjectStorage,
   hash: GitObjectAddress
-): boolean => {
+): GitObjectStorage | null => {
+  if (!storage.has(hash)) return null;
   return storage.delete(hash);
 };
