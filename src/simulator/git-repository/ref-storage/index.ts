@@ -1,10 +1,5 @@
 import { GitObjectAddress } from '../object-storage/types';
-import {
-  deleteNodeAt,
-  getNodeAt,
-  insertNodeAt,
-  isLeafNode,
-} from '../../utils/tree';
+import * as Tree from '../../utils/tree';
 import { GitRefStorage, RefPath, RefTreeNode } from './types';
 
 /**
@@ -20,7 +15,7 @@ import { GitRefStorage, RefPath, RefTreeNode } from './types';
  * Creates an empty ref storage object
  */
 export const createRefStorage = (): GitRefStorage => ({
-  branchHeads: new Map(),
+  branchHeads: Tree.create(),
 });
 
 /**
@@ -31,32 +26,37 @@ export const readRefAt = (
   storage: GitRefStorage,
   path: RefPath
 ): GitObjectAddress | null => {
-  const refNode = getNodeAt(storage.branchHeads, path);
-  if (!refNode || !isLeafNode(refNode)) return null;
+  const refNode = Tree.getNodeAt(storage.branchHeads, path);
+  if (!refNode || !Tree.isLeafNode(refNode)) return null;
   return refNode;
 };
 
 /**
  * Creates a new ref with given path in storage.
- * Returns `true` on success, fails if path leads to existing ref.
+ * Returns new ref storage on success, `null` if path leads to existing ref.
  */
 export const createRefAt = (
   storage: GitRefStorage,
   path: RefPath,
   commitHash: GitObjectAddress
-): boolean => {
-  if (path.length === 0) return false;
-  return insertNodeAt(storage.branchHeads, path, commitHash);
+): GitRefStorage | null => {
+  if (path.length === 0) return null;
+  const newRefTree = Tree.insertNodeAt(storage.branchHeads, path, commitHash);
+  return newRefTree && { ...storage, branchHeads: newRefTree };
 };
 
 /**
  * Deletes leaf ref located at specified path in storage.
  * Returns `true` on success, fails if path is invalid or leads to subtree.
  */
-export const deleteRefAt = (storage: GitRefStorage, path: RefPath): boolean => {
-  const refNode = getNodeAt(storage.branchHeads, path);
-  if (!refNode || !isLeafNode(refNode)) return false;
-  return deleteNodeAt(storage.branchHeads, path);
+export const deleteRefAt = (
+  storage: GitRefStorage,
+  path: RefPath
+): GitRefStorage | null => {
+  const refNode = Tree.getNodeAt(storage.branchHeads, path);
+  if (!refNode || !Tree.isLeafNode(refNode)) return null;
+  const newRefTree = Tree.deleteNodeAt(storage.branchHeads, path);
+  return newRefTree && { ...storage, branchHeads: newRefTree };
 };
 
 /**
@@ -67,9 +67,9 @@ export const getRefContentsAt = (
   storage: GitRefStorage,
   path: RefPath
 ): [string, RefTreeNode][] | null => {
-  const node = getNodeAt(storage.branchHeads, path);
-  if (!node || isLeafNode(node)) return null;
-  return Array.from(node);
+  const node = Tree.getNodeAt(storage.branchHeads, path);
+  if (!node || Tree.isLeafNode(node)) return null;
+  return [...node.entries()];
 };
 
 /**
@@ -80,17 +80,17 @@ export const updateRefAt = (
   storage: GitRefStorage,
   path: RefPath,
   commitHash: GitObjectAddress
-): boolean => {
+): GitRefStorage | null => {
   // Empty path can't point to leaf ref
-  if (path.length === 0) return false;
+  if (path.length === 0) return null;
   // Travel to parent of required ref
   const pathUptoLast = path.slice(0, -1);
   const leafRefName = path[path.length - 1];
-  const refParent = getNodeAt(storage.branchHeads, pathUptoLast);
-  if (!refParent || typeof refParent === 'string') return false;
+  const refParent = Tree.getNodeAt(storage.branchHeads, pathUptoLast);
+  if (!refParent || Tree.isLeafNode(refParent)) return null;
   // Validate and update required leaf ref
   const subNode = refParent.get(leafRefName);
-  if (!subNode || !isLeafNode(subNode)) return false;
-  refParent.set(leafRefName, commitHash);
-  return true;
+  if (!subNode || !Tree.isLeafNode(subNode)) return null;
+  const newRefTree = storage.branchHeads.updateIn(path, 0, () => commitHash);
+  return { ...storage, branchHeads: newRefTree };
 };
