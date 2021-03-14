@@ -80,6 +80,7 @@
 
 .terminal-data {
   flex-grow: 1;
+  overflow-y: auto;
 }
 
 .terminal-input {
