@@ -1,48 +1,88 @@
+import { FileSystem } from '../../file-system/types';
 import { createIndexFromGitTree } from '../../git-repository/index-file';
 import { readObject } from '../../git-repository/object-storage';
 import { GitObjectAddress } from '../../git-repository/object-storage/types';
 import { serializeGitTree } from '../../git-repository/object-storage/utils';
+import { GitHead } from '../../git-repository/types';
+import { SandboxState } from '../../types';
 import { convertTree } from '../../utils/tree';
-import { Operation } from '../types';
+import {
+  Command,
+  CommandExecReturn,
+  CommandOptions,
+  CommandOptionsProfile,
+  CommandOptionValues,
+} from '../types';
+import { errorState, successState } from '../utils';
+
+interface GitCheckoutOptions extends CommandOptionsProfile {}
+
+const gitCheckoutOptions: CommandOptions<GitCheckoutOptions> = {};
 
 /**
  * Given the commit address, checks out a specific commit.
  * Updates file system and index file to commit snapshot.
  */
-export const checkout: Operation<Args, Result> = (system, args) => {
-  const { objectStorage } = system.repository;
+export default class GitCheckoutCommand implements Command<GitCheckoutOptions> {
+  name = 'git-checkout';
+  options = gitCheckoutOptions;
 
-  // Get commit object from storage
-  const commitObject = readObject(objectStorage, args.commitHash);
-  if (!commitObject) return false;
-  if (commitObject.type !== 'commit') return false;
+  parse = (
+    args: string[],
+    print: (text: string) => void
+  ): GitObjectAddress | null => {
+    if (args.length === 0) {
+      // No arguments provided
+      print('missing target commit');
+      return null;
+    } else if (args.length >= 2) {
+      // Too many arguments provided
+      print('too many operands');
+      return null;
+    }
 
-  // Get corresponding Git work tree and serialize it
-  const gitTreeAddress = commitObject.workTree;
-  const serializedTree = serializeGitTree(gitTreeAddress, objectStorage);
-  if (!serializedTree) throw new Error('Commit does not point to Git tree!');
+    return args[0];
+  };
 
-  // Create file system from work tree
-  const newFileSystem = convertTree(
-    serializedTree,
-    (gitBlob) => gitBlob.fileData
-  );
-  system.fileSystem = newFileSystem;
+  execute = (
+    system: SandboxState,
+    print: (text: string) => void,
+    opts: CommandOptionValues<GitCheckoutOptions>,
+    args: string[]
+  ): CommandExecReturn => {
+    const { objectStorage } = system.repository;
 
-  // Create index file from work tree
-  const newIndexFile = createIndexFromGitTree(gitTreeAddress, objectStorage);
-  if (!newIndexFile) throw new Error('Something is terribly wrong.');
-  system.repository.indexFile = newIndexFile;
+    // Parse arguments to get commit address
+    const commitHash = this.parse(args, print);
+    if (!commitHash) return errorState(system);
 
-  // Update HEAD
-  system.repository.head.isDetached = true;
-  system.repository.head.destination = args.commitHash;
+    // Get commit object from storage
+    const commitObject = readObject(objectStorage, commitHash);
+    if (!commitObject || commitObject.type !== 'commit') {
+      print(`'${commitHash}': invalid commit address`);
+      return errorState(system);
+    }
 
-  return true;
-};
+    // Get corresponding Git work tree and serialize it
+    const gitTreeAddress = commitObject.workTree;
+    const serializedTree = serializeGitTree(gitTreeAddress, objectStorage);
+    if (!serializedTree) throw new Error('Commit does not point to Git tree!');
 
-export type Args = {
-  commitHash: GitObjectAddress;
-};
+    // Create file system from work tree
+    const newFileSystem: FileSystem = convertTree(
+      serializedTree,
+      (gitBlob) => gitBlob.fileData
+    );
 
-export type Result = boolean;
+    // Create index file from work tree
+    const newIndexFile = createIndexFromGitTree(gitTreeAddress, objectStorage);
+    if (!newIndexFile) throw new Error(`This shouldn't happen.`);
+
+    // Update HEAD
+    const newHead: GitHead = { isDetached: true, destination: commitHash };
+
+    // Return new system state
+    print(`HEAD is now at ${commitHash.slice(-7)}`);
+    return successState(system, newFileSystem, null, newIndexFile, newHead);
+  };
+}

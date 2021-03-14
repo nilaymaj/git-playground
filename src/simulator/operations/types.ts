@@ -14,7 +14,7 @@ export type CommandOptionType = keyof StringToType;
  * Information about a single CLI option taken by the command.
  */
 export type CommandOption<T extends CommandOptionType> = {
-  shortLetter: string;
+  shortLetter?: string;
   description: string;
   valueType: T;
 };

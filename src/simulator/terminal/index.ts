@@ -4,6 +4,10 @@ import EditCommand from '../operations/file-system/edit';
 import MkdirCommand from '../operations/file-system/mkdir';
 import MvCommand from '../operations/file-system/mv';
 import RmCommand from '../operations/file-system/rm';
+import GitAddCommand from '../operations/git-repository/add';
+import GitCheckoutCommand from '../operations/git-repository/checkout';
+import GitCommitCommand from '../operations/git-repository/commit';
+import GitResetCommand from '../operations/git-repository/reset';
 import { SandboxState } from '../types';
 import Parser, { BinPath } from './parser';
 
@@ -19,6 +23,11 @@ const PATH: BinPath = {
   rm: new RmCommand(),
   cp: new CpCommand(),
   mv: new MvCommand(),
+
+  'git add': new GitAddCommand(),
+  'git checkout': new GitCheckoutCommand(),
+  'git commit': new GitCommitCommand(),
+  'git reset': new GitResetCommand(),
 };
 
 class Terminal {

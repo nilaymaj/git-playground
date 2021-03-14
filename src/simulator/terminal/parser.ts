@@ -44,16 +44,12 @@ export default class Parser {
     if (inputWords.length === 0) return null;
 
     // Try taking first two words as command name
-    console.log('Parsing at 2...');
     const parseAt2 = this.splitAndParseFrom(inputWords, 2);
     if (parseAt2) return parseAt2;
 
     // Try taking only first word as command name
-    console.log('Parsing at 1...');
     const parseAt1 = this.splitAndParseFrom(inputWords, 1);
     if (parseAt1) return parseAt1;
-
-    console.log('Parse failed!');
 
     return null;
   };
@@ -75,7 +71,6 @@ export default class Parser {
 
     // Create minimist parser and parse input
     const minimistOpts = this.createMinimistOptions(command.options);
-    console.log(inputWords.slice(cmdLength));
     const parsed = minimist(inputWords.slice(cmdLength), minimistOpts);
     const { _: args, '--': _o, ...opts } = parsed;
     return { command: commandName, args, opts };

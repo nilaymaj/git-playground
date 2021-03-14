@@ -1,45 +1,78 @@
 import { getItemAt } from '../../file-system';
-import { FileSystemPath } from '../../file-system/types';
 import {
   createEmptyIndex,
   createIndexFromFileTree,
   getPathSection,
   overwriteSection,
 } from '../../git-repository/index-file';
-import { Operation } from '../types';
+import { SandboxState } from '../../types';
+import { parsePathString } from '../../utils/path-utils';
+import {
+  Command,
+  CommandExecReturn,
+  CommandOptions,
+  CommandOptionsProfile,
+  CommandOptionValues,
+} from '../types';
+import { errorState, successState } from '../utils';
+
+interface GitAddOptions extends CommandOptionsProfile {}
+
+const gitAddOptions: CommandOptions<GitAddOptions> = {};
 
 /**
  * Adds a list of paths to the index. For paths leading to directories,
  * adds all files inside the directory to index.
- *
- * Returns a boolean[] representing the success state of each operation.
- * This operation should fail only if the path is invalid.
  */
-export const add: Operation<Args, Result> = (system, args) => {
-  const { fileSystem } = system;
-  const { objectStorage, indexFile } = system.repository;
+export default class GitAddCommand implements Command<GitAddOptions> {
+  name = 'git-add';
+  options = gitAddOptions;
 
-  return args.paths.map((path) => {
-    const fsItem = getItemAt(fileSystem, path);
-    const indexSection = getPathSection(indexFile, path);
+  execute = (
+    system: SandboxState,
+    print: (text: string) => void,
+    _opts: CommandOptionValues<GitAddOptions>,
+    args: string[]
+  ): CommandExecReturn => {
+    const { fileSystem } = system;
+    const { objectStorage, indexFile } = system.repository;
 
-    // Check if the path represents deleted items
-    if (!fsItem) {
-      // If it does not exist in index file either, path is invalid
-      if (indexSection.start === indexSection.end) return false;
-      // Else, path corresponds to deleted items
-      overwriteSection(indexFile, path, createEmptyIndex());
-      return true;
+    const paths = args.map(parsePathString);
+    if (paths.length === 0) {
+      print('missing path operand');
+      return { system, success: false };
     }
 
-    const subIndex = createIndexFromFileTree(fsItem, objectStorage, path);
-    overwriteSection(indexFile, path, subIndex);
-    return true;
-  });
-};
+    let currentIndex = indexFile;
+    let currentObjectStorage = objectStorage;
+    for (const path of paths) {
+      const fsItem = getItemAt(fileSystem, path);
+      const indexSection = getPathSection(indexFile, path);
 
-type Args = {
-  paths: FileSystemPath[];
-};
+      if (!fsItem) {
+        // No file/directory exists at specified path
+        // 1. If it does not exist in index file either, path is invalid
+        if (indexSection.start === indexSection.end) {
+          print(`pathspec '${path}' did not match any files`);
+          return errorState(system, null, currentObjectStorage, currentIndex);
+        }
+        // 2. Else, path corresponds to deleted items
+        const newIndex = overwriteSection(indexFile, path, createEmptyIndex());
+        if (!newIndex) throw new Error(`This shouldn't happen.`);
+        currentIndex = newIndex;
+      } else {
+        // File/directory exists: create subindex and overwrite main index
+        const {
+          storage: newStorage,
+          indexFile: subIndex,
+        } = createIndexFromFileTree(fsItem, objectStorage, path);
+        const newIndex = overwriteSection(indexFile, path, subIndex);
+        if (!newIndex) throw new Error(`This shouldn't happen.`);
+        currentIndex = newIndex;
+        currentObjectStorage = newStorage;
+      }
+    }
 
-type Result = boolean[];
+    return successState(system, null, currentObjectStorage, currentIndex);
+  };
+}
