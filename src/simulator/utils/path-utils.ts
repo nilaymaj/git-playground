@@ -20,3 +20,7 @@ export const parsePathString = (pathString: string): FileSystemPath => {
   const segments = pathString.split('/');
   return segments;
 };
+
+export const getPathString = (path: FileSystemPath): string => {
+  return path.join('/');
+};

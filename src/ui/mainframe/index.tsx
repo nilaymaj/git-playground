@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Mosaic, MosaicParent } from 'react-mosaic-component';
 import FileSystemPane from '../panes/files-manager';
+import { IndexFileView } from '../panes/index-file-view';
 import ObjectStorageView from '../panes/object-storage-view';
 import RepositoryViewerPane from '../panes/repository-viewer';
 import StagingAreaPane from '../panes/staging-area';
@@ -12,6 +13,7 @@ const ELEMENT_MAP: { [key: string]: JSX.Element } = {
   'staging-area': <StagingAreaPane />,
   'repository-view': <RepositoryViewerPane />,
   'object-storage-view': <ObjectStorageView />,
+  'index-file-view': <IndexFileView />,
   terminal: <TerminalPane />,
 };
 
@@ -25,7 +27,7 @@ const defaultLayout: MosaicParent<string> = {
     first: {
       direction: 'row',
       splitPercentage: 40,
-      first: 'staging-area',
+      first: 'index-file-view',
       second: 'object-storage-view',
     },
     second: 'terminal',

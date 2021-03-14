@@ -207,4 +207,39 @@
   align-items: center;
 }
 
+/**********************
+    INDEX FILE VIEW
+**********************/
+
+.index-file-root {
+  padding: 10px;
+}
+
+.index-item-row {
+  display: flex;
+  width: 100%;
+  text-align: left;
+  margin: 5px 0;
+}
+
+.index-item-row .hash {
+  font-family: monospace;
+  font-size: 1.5em;
+  padding: 5px;
+  flex-grow: 0;
+  color: white;
+  background: darkblue;
+  border-radius: 5px;
+}
+
+.index-item-row .path {
+  flex-grow: 1;
+  padding-left: 20px;
+  font-size: 1.7em;
+  font-family: monospace;
+
+  display: flex;
+  align-items: center;
+}
+
 @import '../node_modules/react-mosaic-component/react-mosaic-component.css';
