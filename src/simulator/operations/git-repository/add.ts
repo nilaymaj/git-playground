@@ -57,7 +57,11 @@ export default class GitAddCommand implements Command<GitAddOptions> {
           return errorState(system, null, currentObjectStorage, currentIndex);
         }
         // 2. Else, path corresponds to deleted items
-        const newIndex = overwriteSection(indexFile, path, createEmptyIndex());
+        const newIndex = overwriteSection(
+          currentIndex,
+          path,
+          createEmptyIndex()
+        );
         if (!newIndex) throw new Error(`This shouldn't happen.`);
         currentIndex = newIndex;
       } else {
@@ -65,8 +69,9 @@ export default class GitAddCommand implements Command<GitAddOptions> {
         const {
           storage: newStorage,
           indexFile: subIndex,
-        } = createIndexFromFileTree(fsItem, objectStorage, path);
-        const newIndex = overwriteSection(indexFile, path, subIndex);
+        } = createIndexFromFileTree(fsItem, currentObjectStorage, path);
+        console.log(subIndex);
+        const newIndex = overwriteSection(currentIndex, path, subIndex);
         if (!newIndex) throw new Error(`This shouldn't happen.`);
         currentIndex = newIndex;
         currentObjectStorage = newStorage;
