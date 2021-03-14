@@ -6,9 +6,15 @@ type Props = {
 };
 
 export const FileSystemView = (props: Props) => {
+  const isEmptyFS = props.fileSystem.size === 0;
+
   return (
     <div className='file-system-root'>
-      <DirectoryChildren directory={props.fileSystem} />
+      {!isEmptyFS ? (
+        <DirectoryChildren directory={props.fileSystem} />
+      ) : (
+        <p style={{ padding: '1em 2em' }}>Create a file or directory!</p>
+      )}
     </div>
   );
 };
