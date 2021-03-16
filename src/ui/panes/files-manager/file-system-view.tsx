@@ -1,4 +1,5 @@
 import { FileSystem } from '../../../simulator/file-system/types';
+import { EmptyPrompt } from '../empty-prompt';
 import { DirectoryChildren } from './directory-children';
 
 type Props = {
@@ -13,7 +14,10 @@ export const FileSystemView = (props: Props) => {
       {!isEmptyFS ? (
         <DirectoryChildren directory={props.fileSystem} />
       ) : (
-        <p style={{ padding: '1em 2em' }}>Create a file or directory!</p>
+        <EmptyPrompt
+          message='Create a file or directory from the terminal!'
+          color='green'
+        />
       )}
     </div>
   );

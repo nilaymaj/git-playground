@@ -11,13 +11,9 @@ type SingleDirectoryItemProps = {
 
 const SingleDirectoryItem = (props: SingleDirectoryItemProps) => {
   return (
-    <div className='directory-item-row'>
+    <div className='directory-item-row' onClick={props.onToggleExpand}>
       <div className='icon'>
-        {props.expanded ? (
-          <IoChevronDown onClick={props.onToggleExpand} />
-        ) : (
-          <IoChevronForward onClick={props.onToggleExpand} />
-        )}
+        {props.expanded ? <IoChevronDown /> : <IoChevronForward />}
       </div>
       <div className='name'>{props.name}</div>
     </div>

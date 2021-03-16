@@ -8,23 +8,48 @@
 }
 
 /************************
+  UTIL COMPONENTS
+************************/
+
+.empty-prompt {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20%;
+  text-align: center;
+  font-size: 20px;
+}
+
+/************************
   PANE AND MOSAIC STYLE 
 ************************/
 
 .pane-mosaic {
-  background-color: white;
+  background: #48acff;
+}
+
+.pane-wrapper {
+  padding: 3px;
+  border-radius: 10px;
 }
 
 .pane {
-  padding: 7px;
   border-radius: 10px;
   border: 3px solid black;
+  background: white;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.5);
 }
 
 .pane-header {
+  flex-grow: 0;
   width: 100%;
   padding: 7px;
-  border-radius: 5px;
+  border-radius: 5px 5px 0 0;
   font-size: large;
   text-align: center;
   font-weight: bold;
@@ -32,7 +57,12 @@
 }
 
 .pane-body {
+  flex-grow: 1;
   height: 100%;
+}
+
+.terminal-pane .pane-body {
+  padding-top: 0;
 }
 
 .pane-body pre {
@@ -54,6 +84,7 @@
   display: flex;
   flex-direction: column;
   text-align: left;
+  padding-left: 0.5em;
   height: 100%;
   font-family: monospace;
   font-weight: 400;
@@ -120,13 +151,20 @@
 .file-system-root {
   text-align: left;
   font-size: 1.3em;
-  margin-top: 1em;
   margin-left: -0.8em;
+  padding: 0.3em;
+  height: 100%;
 }
 
 .file-item {
-  padding: 0.1em 0;
+  padding: 0.25em 0;
   display: flex;
+  border-radius: 5px;
+  transition: all 0.1s ease-in-out;
+}
+
+.file-item:hover {
+  background: #ddffc9;
 }
 
 .file-item .icon {
@@ -144,8 +182,14 @@
 }
 
 .directory-item-row {
-  padding: 0.1em 0;
+  padding: 0.25em 0;
   display: flex;
+  transition: all 0.1s ease-in-out;
+  border-radius: 5px;
+}
+
+.directory-item-row:hover {
+  background: #ddffc9;
 }
 
 .directory-item-row .icon {
@@ -186,7 +230,7 @@
   display: flex;
   width: 100%;
   text-align: left;
-  margin: 5px 0;
+  margin: 5px 1px;
 }
 
 .object-row .hash {
@@ -201,11 +245,19 @@
 
 .object-row .object {
   flex-grow: 1;
-  padding-left: 20px;
-  font-size: 1.3em;
+  padding: 5px;
+  padding-left: 10px;
+  margin-left: 10px;
+  font-size: 1.7em;
+  font-family: monospace;
 
   display: flex;
   align-items: center;
+  border-radius: 5px;
+}
+
+.object-row:hover .object {
+  background: #ffdfff;
 }
 
 /**********************
@@ -220,7 +272,7 @@
   display: flex;
   width: 100%;
   text-align: left;
-  margin: 5px 0;
+  margin: 5px 1px;
 }
 
 .index-item-row .hash {
@@ -235,12 +287,19 @@
 
 .index-item-row .path {
   flex-grow: 1;
-  padding-left: 20px;
+  padding: 5px;
+  margin-left: 10px;
+  padding-left: 10px;
   font-size: 1.7em;
   font-family: monospace;
+  border-radius: 5px;
 
   display: flex;
   align-items: center;
+}
+
+.index-item-row:hover .path {
+  background: #e8edff;
 }
 
 @import '../node_modules/react-mosaic-component/react-mosaic-component.css';
