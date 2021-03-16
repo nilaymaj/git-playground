@@ -1,6 +1,6 @@
 import clsx from 'classnames';
-import { FileSystemInternalNode } from '../../../simulator/file-system/types';
-import { isLeafNode } from '../../../simulator/utils/tree';
+import { FileSystemInternalNode } from '../../../simulator/file-system';
+import Tree from '../../../simulator/utils/tree';
 import { DirectoryItem } from './directory-item';
 import { FileItem } from './file-item';
 
@@ -17,7 +17,7 @@ export const DirectoryChildren = (props: DirectoryChildrenProps) => {
     <div className={classes}>
       {children.map((child) => {
         const [childName, childNode] = child;
-        if (isLeafNode(childNode))
+        if (Tree.isLeafNode(childNode))
           return <FileItem key={childName} name={childName} file={childNode} />;
         return (
           <DirectoryItem

@@ -8,7 +8,7 @@ import {
 import { deleteItemAt, getItemAt } from '../../file-system/index';
 import { SandboxState } from '../../types';
 import { parsePathString } from '../../utils/path-utils';
-import { isLeafNode } from '../../utils/tree';
+import Tree from '../../utils/tree';
 
 interface RmOptions extends CommandOptionsProfile {
   recursive: 'boolean';
@@ -48,7 +48,7 @@ export default class RmCommand implements Command<RmOptions> {
         // Path does not exist
         print(`'${path}': no such file or directory`);
         return { system: { ...system, fileSystem: currentFS }, success: false };
-      } else if (!isLeafNode(node) && !opts.recursive) {
+      } else if (!Tree.isLeafNode(node) && !opts.recursive) {
         // Path is directory, and `recursive` not provided
         print(`'${path}': is a directory`);
         return { system: { ...system, fileSystem: currentFS }, success: false };

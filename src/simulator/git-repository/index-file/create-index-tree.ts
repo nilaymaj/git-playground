@@ -1,5 +1,5 @@
-import { FileSystemPath } from '../../file-system/types';
-import { create, Tree } from '../../utils/tree';
+import { FileSystemPath } from '../../file-system';
+import Tree from '../../utils/tree';
 import { IndexFile, IndexFileItem } from './types';
 
 export type IndexTree = Tree<IndexFileItem, string>;
@@ -29,7 +29,7 @@ export const createIndexTree = (index: IndexFile): IndexTree => {
       if (!indexEntry) throw new Error(`This shouldn't happen.`);
       if (indexEntry.key.length === 1) {
         // Chunk corresponds to file entry: add leaf to index tree
-        return rootNode.set(chunk.name, indexEntry.value);
+        return rootNode.insert([chunk.name], indexEntry.value);
       }
     }
 
@@ -41,8 +41,8 @@ export const createIndexTree = (index: IndexFile): IndexTree => {
     // Recursively create index tree for sub-index
     const subIndexTree = createIndexTree(subIndex);
     // Attach sub-index tree to root node
-    return rootNode.set(chunk.name, subIndexTree);
-  }, create() as Tree<IndexFileItem, string>);
+    return rootNode.insert([chunk.name], subIndexTree._tree);
+  }, new Tree() as Tree<IndexFileItem, string>);
 };
 
 /**

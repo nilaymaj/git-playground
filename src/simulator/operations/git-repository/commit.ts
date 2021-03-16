@@ -14,7 +14,7 @@ import {
   GitObjectStorage,
   GitTree,
 } from '../../git-repository/object-storage/types';
-import { isLeafNode } from '../../utils/tree';
+import Tree from '../../utils/tree';
 import { writeObject } from '../../git-repository/object-storage';
 import { getHeadCommit, updateHead } from '../../git-repository/utils';
 import { SandboxState } from '../../types';
@@ -108,18 +108,18 @@ const createWorkTreeFromIndex = (
   indexTree: IndexTree,
   objectStorage: GitObjectStorage
 ): { storage: GitObjectStorage; hash: GitObjectAddress } => {
-  const children = Array.from(indexTree);
+  const children = [...indexTree._tree.entries()];
   const treeItems = new Map<string, GitObjectAddress>();
 
   let currentStorage = objectStorage;
   for (const child of children) {
-    if (isLeafNode(child[1])) {
+    if (Tree.isLeafNode(child[1])) {
       // Leaf node: directly add to work tree
       treeItems.set(child[0], child[1].objectHash);
     } else {
       // Sub-tree: recursively create subtree and add to main tree
       const { storage: newStorage, hash } = createWorkTreeFromIndex(
-        child[1],
+        new Tree(child[1]),
         objectStorage
       );
       treeItems.set(child[0], hash);

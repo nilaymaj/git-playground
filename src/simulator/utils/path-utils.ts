@@ -1,4 +1,4 @@
-import { FileSystemPath } from '../file-system/types';
+import { FileSystemPath } from '../file-system';
 
 /**
  * Checks if a path is a prefix of another path, including if both

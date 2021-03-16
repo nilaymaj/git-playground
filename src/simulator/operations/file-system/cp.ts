@@ -1,4 +1,4 @@
-import { FileSystemPath } from '../../file-system/types';
+import { FileSystemPath } from '../../file-system';
 import {
   Command,
   CommandExecReturn,
@@ -7,7 +7,7 @@ import {
   CommandOptionValues,
 } from '../types';
 import { getItemAt, moveItem } from '../../file-system';
-import { isLeafNode } from '../../utils/tree';
+import Tree from '../../utils/tree';
 import { parsePathString } from '../../utils/path-utils';
 import { SandboxState } from '../../types';
 
@@ -70,11 +70,11 @@ export default class CpCommand implements Command<CpOptions> {
     const destParent = getItemAt(system.fileSystem, args.destPath.slice(0, -1));
     const destNode = getItemAt(system.fileSystem, args.destPath);
     let fullDestPath = args.destPath;
-    if (!destParent || isLeafNode(destParent)) {
+    if (!destParent || Tree.isLeafNode(destParent)) {
       // Invalid destination path
       print('destination path does not exist');
       return { system, success: false };
-    } else if (destNode && !isLeafNode(destNode)) {
+    } else if (destNode && !Tree.isLeafNode(destNode)) {
       // Provided destination is dir, add src item name to get full path
       fullDestPath = [...args.destPath, srcItemName];
     }
@@ -99,7 +99,7 @@ export default class CpCommand implements Command<CpOptions> {
   ): CommandExecReturn => {
     // Ensure that the destination path is a directory
     const destDir = getItemAt(system.fileSystem, args.destDirPath);
-    if (!destDir || !isLeafNode(destDir)) {
+    if (!destDir || !Tree.isLeafNode(destDir)) {
       print(`destination '${args.destDirPath}' is not a directory`);
       return { system, success: false };
     }

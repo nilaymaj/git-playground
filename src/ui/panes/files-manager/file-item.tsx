@@ -1,4 +1,4 @@
-import { FileBlob } from '../../../simulator/file-system/types';
+import { FileBlob } from '../../../simulator/file-system';
 import { IoDocumentOutline } from 'react-icons/io5';
 
 type Props = {

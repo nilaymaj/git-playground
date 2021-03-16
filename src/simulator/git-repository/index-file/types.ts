@@ -1,4 +1,4 @@
-import { FileSystemPath } from '../../file-system/types';
+import { FileSystemPath } from '../../file-system';
 import { SortedArray } from '../../utils/sorted-array';
 import { GitObjectAddress } from '../object-storage/types';
 

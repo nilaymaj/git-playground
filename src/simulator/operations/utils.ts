@@ -1,7 +1,7 @@
-import { FileSystem } from '../file-system/types';
+import { FileSystem } from '../file-system';
 import { IndexFile } from '../git-repository/index-file/types';
 import { GitObjectStorage } from '../git-repository/object-storage/types';
-import { GitRefStorage } from '../git-repository/ref-storage/types';
+import { GitRefStorage } from '../git-repository/ref-storage';
 import { GitHead } from '../git-repository/types';
 import { SandboxState } from '../types';
 

@@ -1,4 +1,4 @@
-import { FileSystem } from './file-system/types';
+import { FileSystem } from './file-system';
 import { GitRepository } from './git-repository/types';
 
 /**

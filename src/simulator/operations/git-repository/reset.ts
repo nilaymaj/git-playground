@@ -3,7 +3,6 @@ import { readObject } from '../../git-repository/object-storage';
 import { serializeGitTree } from '../../git-repository/object-storage/utils';
 import { updateHead } from '../../git-repository/utils';
 import { SandboxState } from '../../types';
-import { convertTree } from '../../utils/tree';
 import {
   Command,
   CommandOptions,
@@ -103,7 +102,7 @@ export default class GitResetCommand implements Command<GitResetOptions> {
     // Hard: reset file system
     const serializedTree = serializeGitTree(commit.workTree, objectStorage);
     if (!serializedTree) throw new Error('Something is terribly wrong.');
-    const newFileSystem = convertTree(serializedTree, (gb) => gb.fileData);
+    const newFileSystem = serializedTree.convert((gb) => gb.fileData);
     return successState(
       system,
       newFileSystem,

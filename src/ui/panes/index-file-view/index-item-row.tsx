@@ -1,4 +1,4 @@
-import { FileSystemPath } from '../../../simulator/file-system/types';
+import { FileSystemPath } from '../../../simulator/file-system';
 import { IndexFileItem } from '../../../simulator/git-repository/index-file/types';
 import { getPathString } from '../../../simulator/utils/path-utils';
 

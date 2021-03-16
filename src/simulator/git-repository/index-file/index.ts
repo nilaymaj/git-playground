@@ -1,5 +1,5 @@
-import { FileSystemNode, FileSystemPath } from '../../file-system/types';
-import { isLeafNode, serializeLeafs } from '../../utils/tree';
+import { FileSystemNode, FileSystemPath } from '../../file-system';
+import Tree from '../../utils/tree';
 import { writeObject } from '../object-storage';
 import { hashBlobObject } from '../object-storage/hash-object';
 import {
@@ -59,9 +59,9 @@ export const createIndexFromFileTree = (
   basePath: FileSystemPath = []
 ): { storage: GitObjectStorage; indexFile: IndexFile } => {
   // Serialize file tree into its leaves
-  const fileTreeLeaves = isLeafNode(fileTree)
+  const fileTreeLeaves = Tree.isLeafNode(fileTree)
     ? [{ path: basePath, value: fileTree }]
-    : serializeLeafs(fileTree, compareNames, basePath);
+    : new Tree(fileTree).toLeafArray(compareNames, basePath);
 
   // Convert file tree leaves to index file entries
   let newObjectStorage = objectStorage;
@@ -92,7 +92,7 @@ export const createIndexFromGitTree = (
   if (!serializedTree) return null;
 
   // Serialize blob tree into array of Git blobs
-  const gitBlobLeaves = serializeLeafs(serializedTree, compareNames);
+  const gitBlobLeaves = serializedTree.toLeafArray(compareNames);
 
   // Convert Git blob leaves to index file entries
   const indexEntries = gitBlobLeaves.map((leaf) => {

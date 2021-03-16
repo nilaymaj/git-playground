@@ -1,6 +1,6 @@
 import { IndexFile } from './index-file/types';
 import { GitObjectAddress, GitObjectStorage } from './object-storage/types';
-import { GitRefStorage, RefPath } from './ref-storage/types';
+import { GitRefStorage, RefPath } from './ref-storage';
 
 // Detached head - points to commit object
 interface DetachedHead {

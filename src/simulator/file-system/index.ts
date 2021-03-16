@@ -1,6 +1,17 @@
 import { v4 as uuid } from 'uuid';
-import * as Tree from '../utils/tree';
-import { FileSystem, FileBlob, FileSystemPath, FileSystemNode } from './types';
+import Tree, { TreeInternalNode, TreeNode, TreePath } from '../utils/tree';
+import { InvalidPathError } from '../utils/errors';
+
+export type FileBlob = {
+  contentToken: string;
+  version: number;
+};
+
+export type FileName = string;
+export type FileSystem = Tree<FileBlob, FileName>;
+export type FileSystemNode = TreeNode<FileBlob, FileName>;
+export type FileSystemInternalNode = TreeInternalNode<FileBlob, FileName>;
+export type FileSystemPath = TreePath<FileName>;
 
 /**
  * Generates new file blob with unique "contents"
@@ -16,7 +27,7 @@ export const generateFileBlob = (token?: string): FileBlob => ({
  * Creates a new blank file system
  */
 export const createFileSystem = (): FileSystem => {
-  return Tree.create();
+  return new Tree();
 };
 
 /**
@@ -27,12 +38,12 @@ export const getItemAt = (
   fileSystem: FileSystem,
   path: FileSystemPath
 ): FileSystemNode | null => {
-  return Tree.getNodeAt(fileSystem, path);
+  return fileSystem.get(path);
 };
 
 /**
  * Creates a new file at given path in file system.
- * Returns true on success, false if path invalid.
+ * Throws if specified path is invalid, or file already exists.
  *
  * Does NOT create any intermediate directories.
  */
@@ -40,35 +51,37 @@ export const createItemAt = (
   fileSystem: FileSystem,
   path: FileSystemPath,
   type: 'file' | 'directory'
-): FileSystem | null => {
+): FileSystem => {
   const item = type === 'file' ? generateFileBlob() : undefined;
-  return Tree.insertNodeAt(fileSystem, path, item);
+  return fileSystem.insert(path, item);
 };
 
 /**
  * Deletes file/directory at given path in file system.
- * Returns true on success, false if path invalid.
+ * Throws if path does not exist.
  */
 export const deleteItemAt = (
   fileSystem: FileSystem,
   path: FileSystemPath
-): FileSystem | null => {
-  return Tree.deleteNodeAt(fileSystem, path);
+): FileSystem => {
+  const item = fileSystem.get(path);
+  if (!item) throw new InvalidPathError();
+  return fileSystem.remove(path);
 };
 
 /**
  * Bump file version at given path in file system.
- * Returns new FS on success, `null` if path invalid.
+ * Throws if path is invalid or leads to internal node
  */
 export const bumpFileVersionAt = (
   fileSystem: FileSystem,
   path: FileSystemPath
-): FileSystem | null => {
-  if (path.length === 0) return null;
+): FileSystem => {
+  if (path.length === 0) throw new InvalidPathError();
   const file = getItemAt(fileSystem, path);
-  if (!file || !Tree.isLeafNode(file)) return null;
+  if (!Tree.isLeafNode(file)) throw new InvalidPathError();
   const newFile = { ...file, version: file.version + 1 };
-  return Tree.updateLeafAt(fileSystem, path, newFile);
+  return fileSystem.update(path, newFile);
 };
 
 /**
@@ -88,29 +101,27 @@ export const moveItem = (
   srcPath: FileSystemPath,
   destPath: FileSystemPath,
   preserveSrc?: boolean
-): FileSystem | null => {
-  // Validate source and destination paths
-  if (srcPath.length === 0) return null;
-  if (destPath.length === 0) return null;
-
-  // Check if the item exists
+): FileSystem => {
+  // Validate source path
+  if (srcPath.length === 0) throw new InvalidPathError('Bad source');
   const item = getItemAt(fileSystem, srcPath);
-  if (!item) return null;
+  if (!item) throw new InvalidPathError('Bad source');
 
-  // Check if destination path is valid
+  // Validate destination path
+  if (destPath.length === 0) throw new InvalidPathError('Bad destination');
   const destDirPath = destPath.slice(0, -1);
   const destDir = getItemAt(fileSystem, destDirPath);
-  if (!destDir || Tree.isLeafNode(destDir)) return null;
+  if (!Tree.isInternalNode(destDir))
+    throw new InvalidPathError('Bad destination');
 
   // Make a copy of the item and move it
   // 1. Remove the node already existing at destination
-  let fsWithoutDest = Tree.deleteNodeAt(fileSystem, destPath);
-  if (!fsWithoutDest) fsWithoutDest = fileSystem;
+  let fsWithoutDest = fileSystem;
+  if (fileSystem.get(destPath)) fsWithoutDest = fileSystem.remove(destPath);
   // 2. Add the source item to the destination
   const destItem = Tree.isLeafNode(item) ? { ...item } : item;
-  const newFS = Tree.insertNodeAt(fsWithoutDest, destPath, destItem);
-  if (!newFS) throw new Error(`This shouldn't happen.`);
+  const newFS = fsWithoutDest.insert(destPath, destItem);
 
   // Remove the source item if required
-  return preserveSrc ? newFS : Tree.deleteNodeAt(newFS, srcPath);
+  return preserveSrc ? newFS : newFS.remove(srcPath);
 };

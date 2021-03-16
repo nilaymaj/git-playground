@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FileSystemInternalNode } from '../../../simulator/file-system/types';
+import { FileSystemInternalNode } from '../../../simulator/file-system';
 import { IoChevronForward, IoChevronDown } from 'react-icons/io5';
 import { DirectoryChildren } from './directory-children';
 

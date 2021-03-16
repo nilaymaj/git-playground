@@ -1,4 +1,4 @@
-import { FileBlob } from '../../file-system/types';
+import { FileBlob } from '../../file-system';
 import { Map as IMMap } from 'immutable';
 
 /**

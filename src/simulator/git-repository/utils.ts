@@ -1,6 +1,6 @@
 import { GitObjectAddress } from './object-storage/types';
 import { readRefAt, updateRefAt } from './ref-storage';
-import { GitRefStorage } from './ref-storage/types';
+import { GitRefStorage } from './ref-storage';
 import { GitHead } from './types';
 
 /**
