@@ -35,12 +35,11 @@ export interface GitCommit {
 export type GitObject = GitBlob | GitTree | GitCommit;
 
 /**
- * Git's "content-addressable filesystem",
- * a mapping from SHA-1 hashes to Git objects
- */
-export type GitObjectStorage = IMMap<string, GitObject>;
-
-/**
  * The SHA-1 address to a Git object.
  */
 export type GitObjectAddress = string;
+
+/**
+ * The underlying data structure of Git Object Storage.
+ */
+export type GitObjectStorage = IMMap<GitObjectAddress, GitObject>;

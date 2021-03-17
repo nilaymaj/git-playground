@@ -21,48 +21,49 @@ import { GitObjectStorage, GitObject, GitObjectAddress } from './types';
  *   - trees point to blobs and subtrees
  *   - blobs are leafs of the graph
  */
+export default class ObjectStorage {
+  _db: GitObjectStorage;
 
-/**
- * Create an empty instance of Git object storage
- */
-export const createObjectStorage = (): GitObjectStorage => {
-  return Map();
-};
+  constructor(db?: GitObjectStorage) {
+    if (db) this._db = db;
+    else this._db = Map();
+  }
 
-/**
- * Fetches object stored at given hash in storage.
- * Returns `null` if object does not exist.
- */
-export const readObject = (
-  storage: GitObjectStorage,
-  hash: GitObjectAddress
-): GitObject | null => {
-  const object = storage.get(hash);
-  if (!object) return null;
-  else return object;
-};
+  /**
+   * Immutability helper method: use this to return ObjectStorage
+   * instance with updated object database.
+   */
+  private updatedClass = (db: GitObjectStorage): ObjectStorage => {
+    if (this._db === db) return this;
+    else return new ObjectStorage(db);
+  };
 
-/**
- * Hashes and stores given object in the object storage.
- * Returns SHA-1 hash of the stored object.
- */
-export const writeObject = (
-  storage: GitObjectStorage,
-  object: GitObject
-): { storage: GitObjectStorage; hash: GitObjectAddress } => {
-  const hash = hashObject(object);
-  const newStorage = storage.set(hash, object);
-  return { storage: newStorage, hash };
-};
+  /**
+   * Read an object located in object storage.
+   */
+  read = (hash: GitObjectAddress): GitObject | null => {
+    return this._db.get(hash, null);
+  };
 
-/**
- * Deletes object at given hash from storage
- * Returns true on success, fails if object does not exist
- */
-export const deleteObject = (
-  storage: GitObjectStorage,
-  hash: GitObjectAddress
-): GitObjectStorage | null => {
-  if (!storage.has(hash)) return null;
-  return storage.delete(hash);
-};
+  /**
+   * Write a new object to the object storage.
+   * Does nothing if object already exists.
+   */
+  write = (
+    object: GitObject
+  ): { storage: ObjectStorage; hash: GitObjectAddress } => {
+    const hash = hashObject(object);
+    const newDB = this._db.set(hash, object);
+    return { storage: this.updatedClass(newDB), hash };
+  };
+
+  /**
+   * Delete an object from object storage.
+   * Does nothing if object does not exist.
+   */
+  delete = (hash: GitObjectAddress): ObjectStorage => {
+    if (!this._db.has(hash)) return this;
+    const newDB = this._db.delete(hash);
+    return this.updatedClass(newDB);
+  };
+}

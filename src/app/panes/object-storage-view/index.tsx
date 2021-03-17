@@ -8,7 +8,7 @@ type Props = {};
 const ObjectStorageView = (props: Props) => {
   const repository = useRepository();
   const objectStorage = repository.objectStorage;
-  const objects = [...objectStorage.entries()];
+  const objects = [...objectStorage._db.entries()];
   const isEmpty = objects.length === 0;
 
   return (

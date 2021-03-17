@@ -1,7 +1,7 @@
 import * as Index from './index';
 import { FileBlob, FileSystemPath } from '../../file-system';
 import { createSampleFS } from '../../file-system/index.test';
-import { createObjectStorage } from '../object-storage';
+import ObjectStorage from '../object-storage';
 import { hashBlobObject } from '../object-storage/hash-object';
 import { IndexFile, IndexFileItem } from './types';
 import { SortedArrayItem } from '../../utils/sorted-array';
@@ -10,7 +10,7 @@ import { SortedArrayItem } from '../../utils/sorted-array';
 type IndexArrayItem = SortedArrayItem<FileSystemPath, IndexFileItem>;
 
 const createSampleIndex = () => {
-  const objectStorage = createObjectStorage();
+  const objectStorage = new ObjectStorage();
   const fs = createSampleFS();
   const { indexFile, storage } = Index.createIndexFromFileTree(
     fs._fs._tree,

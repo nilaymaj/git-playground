@@ -11,14 +11,13 @@ import {
 } from '../../git-repository/index-file/create-index-tree';
 import {
   GitObjectAddress,
-  GitObjectStorage,
   GitTree,
 } from '../../git-repository/object-storage/types';
 import Tree from '../../utils/tree';
-import { writeObject } from '../../git-repository/object-storage';
 import { getHeadCommit, updateHead } from '../../git-repository/utils';
 import { SandboxState } from '../../types';
 import { errorState, successState } from '../utils';
+import ObjectStorage from '../../git-repository/object-storage';
 
 interface GitCommitOptions extends CommandOptionsProfile {
   message: 'single';
@@ -74,7 +73,7 @@ export default class GitCommitCommand implements Command<GitCommitOptions> {
       );
       // Create new commit object
       const parentCommit = getHeadCommit(system.repository.head, refStorage);
-      const { storage, hash: commitHash } = writeObject(tempStorage, {
+      const { storage, hash: commitHash } = tempStorage.write({
         type: 'commit',
         timestamp: new Date(),
         workTree: treeHash,
@@ -106,8 +105,8 @@ export default class GitCommitCommand implements Command<GitCommitOptions> {
  */
 const createWorkTreeFromIndex = (
   indexTree: IndexTree,
-  objectStorage: GitObjectStorage
-): { storage: GitObjectStorage; hash: GitObjectAddress } => {
+  objectStorage: ObjectStorage
+): { storage: ObjectStorage; hash: GitObjectAddress } => {
   const children = [...indexTree._tree.entries()];
   const treeItems = new Map<string, GitObjectAddress>();
 
@@ -129,5 +128,5 @@ const createWorkTreeFromIndex = (
 
   // Register tree to object storage and return hash
   const gitTree: GitTree = { type: 'tree', items: treeItems };
-  return writeObject(currentStorage, gitTree);
+  return currentStorage.write(gitTree);
 };

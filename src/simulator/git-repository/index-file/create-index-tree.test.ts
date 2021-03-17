@@ -1,19 +1,19 @@
 import { createIndexTree } from './create-index-tree';
 import * as Index from './index';
 import { createSampleFS } from '../../file-system/index.test';
-import { createObjectStorage } from '../object-storage';
+import ObjectStorage from '../object-storage';
 import Tree from '../../utils/tree';
 import { IndexFileItem } from './types';
 
 const validIndexFile = () => {
   const fs = createSampleFS();
-  const objectStorage = createObjectStorage();
+  const objectStorage = new ObjectStorage();
   return Index.createIndexFromFileTree(fs._fs._tree, objectStorage).indexFile;
 };
 
 const invalidIndexFile = () => {
   const fs = createSampleFS();
-  const objectStorage = createObjectStorage();
+  const objectStorage = new ObjectStorage();
   const { indexFile } = Index.createIndexFromFileTree(
     fs._fs._tree,
     objectStorage

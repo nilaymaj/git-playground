@@ -1,5 +1,6 @@
 import { IndexFile } from './index-file/types';
-import { GitObjectAddress, GitObjectStorage } from './object-storage/types';
+import ObjectStorage from './object-storage';
+import { GitObjectAddress } from './object-storage/types';
 import { GitRefStorage, RefPath } from './ref-storage';
 
 // Detached head - points to commit object
@@ -25,7 +26,7 @@ export type GitHead = StableHead | DetachedHead;
  * Represents the Git repository of a single sandbox.
  */
 export interface GitRepository {
-  objectStorage: GitObjectStorage;
+  objectStorage: ObjectStorage;
   refStorage: GitRefStorage;
   indexFile: IndexFile;
   head: GitHead;

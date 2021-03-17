@@ -1,6 +1,5 @@
 import FileSystem from '../../file-system';
 import { createIndexFromGitTree } from '../../git-repository/index-file';
-import { readObject } from '../../git-repository/object-storage';
 import { GitObjectAddress } from '../../git-repository/object-storage/types';
 import { serializeGitTree } from '../../git-repository/object-storage/utils';
 import { GitHead } from '../../git-repository/types';
@@ -56,7 +55,7 @@ export default class GitCheckoutCommand implements Command<GitCheckoutOptions> {
     if (!commitHash) return errorState(system);
 
     // Get commit object from storage
-    const commitObject = readObject(objectStorage, commitHash);
+    const commitObject = objectStorage.read(commitHash);
     if (!commitObject || commitObject.type !== 'commit') {
       print(`'${commitHash}': invalid commit address`);
       return errorState(system);

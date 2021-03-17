@@ -1,6 +1,5 @@
 import FileSystem from '../../file-system';
 import { createIndexFromGitTree } from '../../git-repository/index-file';
-import { readObject } from '../../git-repository/object-storage';
 import { serializeGitTree } from '../../git-repository/object-storage/utils';
 import { updateHead } from '../../git-repository/utils';
 import { SandboxState } from '../../types';
@@ -71,12 +70,12 @@ export default class GitResetCommand implements Command<GitResetOptions> {
     const resetMode = this.getMode(opts);
 
     // Get the commit and work tree objects
-    const commit = readObject(objectStorage, targetCommitHash);
+    const commit = objectStorage.read(targetCommitHash);
     if (!commit || commit.type !== 'commit') {
       print(`'${targetCommitHash.slice(-7)}': invalid commit address`);
       return errorState(system);
     }
-    const tree = readObject(objectStorage, commit.workTree);
+    const tree = objectStorage.read(commit.workTree);
     if (!tree || tree.type !== 'tree')
       throw new Error('Inconsistent object storage');
 

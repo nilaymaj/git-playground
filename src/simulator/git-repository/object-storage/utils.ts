@@ -1,6 +1,6 @@
-import { GitObjectAddress, GitObjectStorage, GitBlob } from './types';
+import { GitObjectAddress, GitBlob } from './types';
 import Tree from '../../utils/tree';
-import { readObject } from './index';
+import ObjectStorage from './index';
 export type SerializedGitTree = Tree<GitBlob, string>;
 
 /**
@@ -12,14 +12,14 @@ export type SerializedGitTree = Tree<GitBlob, string>;
  */
 export const serializeGitTree = (
   treeHash: GitObjectAddress,
-  storage: GitObjectStorage
+  storage: ObjectStorage
 ): SerializedGitTree | null => {
-  const tree = readObject(storage, treeHash);
+  const tree = storage.read(treeHash);
   if (!tree || tree.type !== 'tree') return null;
   // Iterate through children and add to serialized tree
   return Array.from(tree.items).reduce((mainNode, child) => {
     const [childName, hash] = child;
-    const subNode = readObject(storage, hash);
+    const subNode = storage.read(hash);
     if (!subNode || subNode.type === 'commit')
       throw new Error('Commit object pointed to by tree object');
     // Blobs are leaf of serialized tree, so set directly

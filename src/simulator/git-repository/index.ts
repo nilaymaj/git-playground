@@ -1,16 +1,12 @@
 import { createEmptyIndex } from './index-file';
-import { createObjectStorage } from './object-storage';
+import ObjectStorage from './object-storage';
 import { createRefStorage } from './ref-storage';
 import { GitRepository } from './types';
-
-export * as IndexFile from './index-file';
-export * as ObjectStorage from './object-storage';
-export * as RefStorage from './ref-storage';
 
 export const createNewRepository = (): GitRepository => {
   return {
     indexFile: createEmptyIndex(),
-    objectStorage: createObjectStorage(),
+    objectStorage: new ObjectStorage(),
     refStorage: createRefStorage(),
     head: {
       isDetached: true,

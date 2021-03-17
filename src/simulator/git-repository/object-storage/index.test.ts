@@ -1,12 +1,6 @@
 import { v4 as uuid } from 'uuid';
-import * as Obj from './index';
-import {
-  GitBlob,
-  GitTree,
-  GitCommit,
-  GitObjectStorage,
-  GitObjectAddress,
-} from './types';
+import ObjectStorage from './index';
+import { GitBlob, GitTree, GitCommit, GitObjectAddress } from './types';
 import FileSystem from '../../file-system';
 
 /**
@@ -26,15 +20,15 @@ const createSampleBlob = (): GitBlob => ({
  * arises from randomly generated branch names and leaf values.
  */
 const createSampleTree = (
-  storage?: GitObjectStorage
-): { storage: GitObjectStorage; tree: GitTree } => {
-  const start = storage || Obj.createObjectStorage();
+  storage?: ObjectStorage
+): { storage: ObjectStorage; tree: GitTree } => {
+  const start = storage || new ObjectStorage();
   // Write three random file blobs to storage
-  const { storage: s1, hash: h1 } = Obj.writeObject(start, createSampleBlob());
-  const { storage: s2, hash: h2 } = Obj.writeObject(s1, createSampleBlob());
-  const { storage: s3, hash: h3 } = Obj.writeObject(s2, createSampleBlob());
+  const { storage: s1, hash: h1 } = start.write(createSampleBlob());
+  const { storage: s2, hash: h2 } = s1.write(createSampleBlob());
+  const { storage: s3, hash: h3 } = s2.write(createSampleBlob());
   // Create and write subtree of required sample tree
-  const { storage: s4, hash: h4 } = Obj.writeObject(s3, {
+  const { storage: s4, hash: h4 } = s3.write({
     type: 'tree',
     items: new Map([
       [uuid(), h1],
@@ -62,11 +56,11 @@ const createSampleTree = (
  * Each generated commit differs both in metadata and generated work tree.
  */
 const createSampleCommit = (
-  storage: GitObjectStorage,
+  storage: ObjectStorage,
   tree?: GitObjectAddress
-): { storage: GitObjectStorage; commit: GitCommit } => {
+): { storage: ObjectStorage; commit: GitCommit } => {
   const { storage: s1, tree: sampleTree } = createSampleTree(storage);
-  const { storage: s2, hash: treeHash } = Obj.writeObject(s1, sampleTree);
+  const { storage: s2, hash: treeHash } = s1.write(sampleTree);
   return {
     storage: s2,
     commit: {
@@ -80,62 +74,48 @@ const createSampleCommit = (
 };
 
 test('Same object -> same hash', () => {
-  const storage = Obj.createObjectStorage();
+  const storage = new ObjectStorage();
 
   const blob = createSampleBlob();
   const blobCopy = { ...blob };
-  expect(Obj.writeObject(storage, blob).hash).toBe(
-    Obj.writeObject(storage, blobCopy).hash
-  );
+  expect(storage.write(blob).hash).toBe(storage.write(blobCopy).hash);
 
   const { storage: s1, tree } = createSampleTree(storage);
   const treeCopy = { ...tree };
-  expect(Obj.writeObject(s1, tree).hash).toBe(
-    Obj.writeObject(s1, treeCopy).hash
-  );
+  expect(s1.write(tree).hash).toBe(s1.write(treeCopy).hash);
 
   const { storage: s2, commit } = createSampleCommit(storage);
   const commitCopy = { ...commit };
-  expect(Obj.writeObject(s2, commit).hash).toBe(
-    Obj.writeObject(s2, commitCopy).hash
-  );
+  expect(s2.write(commit).hash).toBe(s2.write(commitCopy).hash);
 });
 
 test('Different object -> different hash', () => {
-  const storage = Obj.createObjectStorage();
+  const storage = new ObjectStorage();
 
   const blob = createSampleBlob();
   const otherBlob = createSampleBlob();
-  expect(Obj.writeObject(storage, blob)).not.toBe(
-    Obj.writeObject(storage, otherBlob)
-  );
+  expect(storage.write(blob)).not.toBe(storage.write(otherBlob));
 
   const { storage: s11, tree } = createSampleTree(storage);
   const { storage: s12, tree: otherTree } = createSampleTree(storage);
-  expect(Obj.writeObject(s11, tree).hash).not.toBe(
-    Obj.writeObject(s12, otherTree).hash
-  );
+  expect(s11.write(tree).hash).not.toBe(s12.write(otherTree).hash);
 
   const { storage: s21, commit } = createSampleCommit(storage);
   const { storage: s22, commit: otherCommit } = createSampleCommit(storage);
-  expect(Obj.writeObject(s21, commit).hash).not.toBe(
-    Obj.writeObject(s22, otherCommit).hash
-  );
+  expect(s21.write(commit).hash).not.toBe(s22.write(otherCommit).hash);
 });
 
 test('Object storage works', () => {
-  const storage = Obj.createObjectStorage();
+  const storage = new ObjectStorage();
 
   // Object read and write
   const blob = createSampleBlob();
-  const { storage: s1, hash } = Obj.writeObject(storage, blob);
+  const { storage: s1, hash } = storage.write(blob);
   expect(hash).toBeTruthy();
-  expect(Obj.readObject(s1, '?')).toBe(null);
-  expect(Obj.readObject(s1, hash)).toStrictEqual(blob);
+  expect(s1.read('?')).toBeNull();
+  expect(s1.read(hash)).toStrictEqual(blob);
 
-  // Object deletion
-  expect(Obj.deleteObject(storage, '?')).toBeNull();
-  const s2 = Obj.deleteObject(s1, hash) as GitObjectStorage;
-  expect(s2).not.toBeNull();
-  expect(Obj.readObject(s2, hash)).toBeNull();
+  // Deleting non-existent objects is a no-op
+  const s2 = s1.delete(hash);
+  expect(s2.read(hash)).toBeNull();
 });
