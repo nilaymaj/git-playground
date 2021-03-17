@@ -1,6 +1,6 @@
 import './App.css';
-import { SandboxProvider } from './ui/mainframe/providers/sandbox-provider';
-import { Mainframe } from './ui/mainframe';
+import { SandboxProvider } from './app/mainframe/providers/sandbox-provider';
+import { Mainframe } from './app/mainframe';
 
 function App() {
   return (
