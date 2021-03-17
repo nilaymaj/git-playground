@@ -1,0 +1,71 @@
+.terminal-container {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  padding-left: 0.5em;
+  height: 100%;
+  font-family: monospace;
+  font-weight: 400;
+}
+
+.terminal-row {
+  width: 100%;
+  text-align: left;
+  font-size: 1.5em;
+  color: #aaa;
+}
+
+.terminal-row.prompt {
+  margin-top: 10px;
+  margin-bottom: 5px;
+  color: white;
+}
+
+.terminal-row-prompt {
+  color: #0f9af7;
+  margin-right: 10px;
+  font-weight: 900;
+}
+
+.terminal-data {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.terminal-input__wrapper {
+  flex-grow: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 7px 0;
+  border-top: 1px solid #aaaaaa55;
+}
+
+.terminal-input {
+  flex-grow: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+
+  /* padding-top: 10px; */
+}
+
+.terminal-input .prompt {
+  flex-grow: 0;
+  font-size: 1.5em;
+  padding: 0 10px;
+  color: #0f9af7;
+}
+
+.terminal-input input {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+
+  caret-color: #bbb;
+  color: white;
+
+  font-family: inherit;
+  font-size: 1.5em;
+}

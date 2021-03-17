@@ -22,6 +22,27 @@
   font-size: 20px;
 }
 
+.chip {
+  font-family: monospace;
+  font-size: 1.5em;
+  padding: 5px;
+  color: white;
+  border-radius: 5px;
+}
+
+.chip.button {
+  cursor: pointer;
+  transition: all 0.05s ease-in-out;
+}
+
+.chip.button:hover {
+  transform: scale(1.05);
+}
+
+.chip.button:active {
+  transform: scale(1);
+}
+
 /************************
   PANE AND MOSAIC STYLE 
 ************************/
@@ -80,226 +101,21 @@
   TERMINAL 
 ************************/
 
-.terminal-container {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-  padding-left: 0.5em;
-  height: 100%;
-  font-family: monospace;
-  font-weight: 400;
-}
-
-.terminal-row {
-  width: 100%;
-  text-align: left;
-  font-size: 1.5em;
-  color: #aaa;
-}
-
-.terminal-row.prompt {
-  margin-top: 10px;
-  margin-bottom: 5px;
-  color: white;
-}
-
-.terminal-row-prompt {
-  color: #0f9af7;
-  margin-right: 10px;
-  font-weight: 900;
-}
-
-.terminal-data {
-  flex-grow: 1;
-  overflow-y: auto;
-}
-
-.terminal-input {
-  flex-grow: 0;
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-
-  padding-top: 10px;
-  border-top: 1px solid #aaaaaa55;
-}
-
-.terminal-input .prompt {
-  flex-grow: 0;
-  font-size: 1.5em;
-  padding: 0 10px;
-  color: #0f9af7;
-}
-
-.terminal-input input {
-  flex-grow: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-
-  caret-color: #bbb;
-  color: white;
-
-  font-family: inherit;
-  font-size: 1.5em;
-}
-
 /*******************
    FILE SYSTEM
 *******************/
-
-.file-system-root {
-  text-align: left;
-  font-size: 1.3em;
-  margin-left: -0.8em;
-  padding: 0.3em;
-  height: 100%;
-}
-
-.file-item {
-  padding: 0.25em 0;
-  display: flex;
-  border-radius: 5px;
-  transition: all 0.1s ease-in-out;
-}
-
-.file-item:hover {
-  background: #ddffc9;
-}
-
-.file-item .icon {
-  flex-grow: 0;
-  padding: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.file-item .name {
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-}
-
-.directory-item-row {
-  padding: 0.25em 0;
-  display: flex;
-  transition: all 0.1s ease-in-out;
-  border-radius: 5px;
-}
-
-.directory-item-row:hover {
-  background: #ddffc9;
-}
-
-.directory-item-row .icon {
-  flex-grow: 0;
-  padding: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.directory-item-row .name {
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-}
-
-.directory-children {
-  padding-left: 1.1em;
-  max-height: 1000px;
-  transform-origin: top;
-  transition: all 0.1s ease-in-out;
-}
-
-.directory-children.collapse {
-  transform: scaleY(0);
-  max-height: 0;
-}
 
 /*************************
     OBJECT STORAGE
 *************************/
 
-.object-storage-root {
-  padding: 10px;
-}
-
-.object-row {
-  display: flex;
-  width: 100%;
-  text-align: left;
-  margin: 5px 1px;
-}
-
-.object-row .hash {
-  font-family: monospace;
-  font-size: 1.5em;
-  padding: 5px;
-  flex-grow: 0;
-  color: white;
-  background: purple;
-  border-radius: 5px;
-}
-
-.object-row .object {
-  flex-grow: 1;
-  padding: 5px;
-  padding-left: 10px;
-  margin-left: 10px;
-  font-size: 1.7em;
-  font-family: monospace;
-
-  display: flex;
-  align-items: center;
-  border-radius: 5px;
-}
-
-.object-row:hover .object {
-  background: #ffdfff;
-}
-
 /**********************
     INDEX FILE VIEW
 **********************/
 
-.index-file-root {
-  padding: 10px;
-}
-
-.index-item-row {
-  display: flex;
-  width: 100%;
-  text-align: left;
-  margin: 5px 1px;
-}
-
-.index-item-row .hash {
-  font-family: monospace;
-  font-size: 1.5em;
-  padding: 5px;
-  flex-grow: 0;
-  color: white;
-  background: darkblue;
-  border-radius: 5px;
-}
-
-.index-item-row .path {
-  flex-grow: 1;
-  padding: 5px;
-  margin-left: 10px;
-  padding-left: 10px;
-  font-size: 1.7em;
-  font-family: monospace;
-  border-radius: 5px;
-
-  display: flex;
-  align-items: center;
-}
-
-.index-item-row:hover .path {
-  background: #e8edff;
-}
-
 @import '../node_modules/react-mosaic-component/react-mosaic-component.css';
+
+@import './app/panes/files-manager/style.css';
+@import './app/panes/index-file-view/style.css';
+@import './app/panes/object-storage-view/style.css';
+@import './app/panes/terminal/style.css';

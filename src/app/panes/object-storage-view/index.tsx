@@ -1,5 +1,5 @@
 import { useRepository } from '../../mainframe/providers/sandbox-provider';
-import { EmptyPrompt } from '../empty-prompt';
+import { EmptyPrompt } from '../../ui/empty-prompt';
 import Pane from '../pane';
 import { ObjectRow } from './object-row';
 

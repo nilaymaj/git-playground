@@ -1,4 +1,5 @@
 import { GitObject } from '../../../simulator/git-repository/object-storage/types';
+import { MonospaceChip } from '../../ui/monospace-chip';
 
 const getDisplayString = (object: GitObject) => {
   if (object.type === 'blob') {
@@ -23,7 +24,12 @@ export const ObjectRow = (props: Props) => {
   return (
     <div className='object-row'>
       <div className='hash' title={props.hash}>
-        {props.hash.slice(-7)}
+        <MonospaceChip
+          text={props.hash.slice(-7)}
+          color='purple'
+          hint={props.hash}
+          onClick={() => navigator.clipboard.writeText(props.hash)}
+        />
       </div>
       <div className='object'>{getDisplayString(props.object)}</div>
     </div>

@@ -1,6 +1,6 @@
 import { getPathString } from '../../../simulator/utils/path-utils';
 import { useRepository } from '../../mainframe/providers/sandbox-provider';
-import { EmptyPrompt } from '../empty-prompt';
+import { EmptyPrompt } from '../../ui/empty-prompt';
 import Pane from '../pane';
 import { IndexItemRow } from './index-item-row';
 

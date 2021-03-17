@@ -1,5 +1,5 @@
 import { FileSystem } from '../../../simulator/file-system';
-import { EmptyPrompt } from '../empty-prompt';
+import { EmptyPrompt } from '../../ui/empty-prompt';
 import { DirectoryChildren } from './directory-children';
 
 type Props = {

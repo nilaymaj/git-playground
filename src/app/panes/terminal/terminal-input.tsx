@@ -26,9 +26,11 @@ export const TerminalInput = (props: Props) => {
   }, [input, onInput]);
 
   return (
-    <div className='terminal-input'>
-      <span className='prompt'>{'>'}</span>
-      <input value={input} onChange={changeInput} className='input' />
+    <div className='terminal-input__wrapper'>
+      <div className='terminal-input'>
+        <span className='prompt'>{'>'}</span>
+        <input value={input} onChange={changeInput} className='input' />
+      </div>
     </div>
   );
 };
