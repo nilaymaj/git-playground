@@ -1,6 +1,5 @@
 import { GitObjectAddress } from './object-storage/types';
-import { readRefAt, updateRefAt } from './ref-storage';
-import { GitRefStorage } from './ref-storage';
+import RefStorage from './ref-storage';
 import { GitHead } from './types';
 
 /**
@@ -9,13 +8,13 @@ import { GitHead } from './types';
  */
 export const getHeadCommit = (
   head: GitHead,
-  refStorage: GitRefStorage
+  refStorage: RefStorage
 ): GitObjectAddress => {
   // Detached head directly points to commit
   if (head.isDetached) return head.destination;
   // Stable head points to ref, which points to commit
   const refAddress = head.destination;
-  const refLeaf = readRefAt(refStorage, refAddress);
+  const refLeaf = refStorage.readLeaf(refAddress);
   if (!refLeaf) throw new Error('HEAD ref points to invalid commit!');
   return refLeaf;
 };
@@ -29,9 +28,9 @@ export const getHeadCommit = (
  */
 export const updateHead = (
   head: GitHead,
-  refStorage: GitRefStorage,
+  refStorage: RefStorage,
   commitHash: GitObjectAddress
-): GitRefStorage | null => {
+): RefStorage | null => {
   if (head.isDetached) {
     // Detached head: update directly
     head.destination = commitHash;
@@ -39,6 +38,6 @@ export const updateHead = (
   } else {
     // Stable head: update the ref pointed to by head
     const refAddress = head.destination;
-    return updateRefAt(refStorage, refAddress, commitHash);
+    return refStorage.update(refAddress, commitHash);
   }
 };

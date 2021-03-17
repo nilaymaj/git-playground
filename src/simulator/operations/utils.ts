@@ -1,7 +1,7 @@
 import FileSystem from '../file-system';
 import { IndexFile } from '../git-repository/index-file/types';
 import ObjectStorage from '../git-repository/object-storage';
-import { GitRefStorage } from '../git-repository/ref-storage';
+import RefStorage from '../git-repository/ref-storage';
 import { GitHead } from '../git-repository/types';
 import { SandboxState } from '../types';
 
@@ -16,7 +16,7 @@ export const errorState = (
   objectStorage?: ObjectStorage | null,
   indexFile?: IndexFile | null,
   head?: GitHead | null,
-  refStorage?: GitRefStorage | null
+  refStorage?: RefStorage | null
 ): { system: SandboxState; success: boolean } => {
   return {
     success: false,
@@ -43,7 +43,7 @@ export const successState = (
   objectStorage?: ObjectStorage | null,
   indexFile?: IndexFile | null,
   head?: GitHead | null,
-  refStorage?: GitRefStorage | null
+  refStorage?: RefStorage | null
 ): { system: SandboxState; success: boolean } => {
   return {
     success: true,
