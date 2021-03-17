@@ -5,10 +5,11 @@ import {
   CommandOptionsProfile,
   CommandOptionValues,
 } from '../types';
-import { deleteItemAt, getItemAt } from '../../file-system/index';
 import { SandboxState } from '../../types';
 import { parsePathString } from '../../utils/path-utils';
 import Tree from '../../utils/tree';
+import { errorState, successState } from '../utils';
+import { Apocalypse } from '../../utils/errors';
 
 interface RmOptions extends CommandOptionsProfile {
   recursive: 'boolean';
@@ -38,28 +39,28 @@ export default class RmCommand implements Command<RmOptions> {
     const paths = args.map(parsePathString);
     if (paths.length === 0) {
       print('missing file operand');
-      return { system, success: false };
+      return errorState(system);
     }
 
     let currentFS = system.fileSystem;
     for (const path of paths) {
-      const node = getItemAt(currentFS, path);
+      const node = currentFS.get(path);
       if (!node) {
         // Path does not exist
         print(`'${path}': no such file or directory`);
-        return { system: { ...system, fileSystem: currentFS }, success: false };
+        return errorState(system, currentFS);
       } else if (!Tree.isLeafNode(node) && !opts.recursive) {
         // Path is directory, and `recursive` not provided
         print(`'${path}': is a directory`);
-        return { system: { ...system, fileSystem: currentFS }, success: false };
+        return errorState(system, currentFS);
       }
 
       // Remove item and update FS
-      const newFS = deleteItemAt(currentFS, path);
-      if (!newFS) throw new Error(`This shouldn't happen.`);
+      const newFS = currentFS.delete(path);
+      if (!newFS) throw new Apocalypse();
       currentFS = newFS;
     }
 
-    return { system: { ...system, fileSystem: currentFS }, success: true };
+    return successState(system, currentFS);
   };
 }

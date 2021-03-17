@@ -5,7 +5,6 @@ import {
   CommandOptionsProfile,
   CommandOptionValues,
 } from '../types';
-import { bumpFileVersionAt } from '../../file-system/index';
 import { parsePathString } from '../../utils/path-utils';
 import { SandboxState } from '../../types';
 
@@ -36,7 +35,7 @@ export default class EditCommand implements Command<EditOptions> {
     let currentFS = system.fileSystem;
     for (const path of paths) {
       // Bump file at current path
-      const newFS = bumpFileVersionAt(currentFS, path);
+      const newFS = currentFS.bumpFileVersion(path);
       if (!newFS) {
         print(`'path' is not a file`);
         return { system: { ...system, fileSystem: currentFS }, success: false };

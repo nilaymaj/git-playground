@@ -5,7 +5,6 @@ import {
   CommandOptionsProfile,
   CommandOptionValues,
 } from '../types';
-import { createItemAt } from '../../file-system/index';
 import { SandboxState } from '../../types';
 import { parsePathString } from '../../utils/path-utils';
 
@@ -36,7 +35,7 @@ export default class MkdirCommand implements Command<MkdirOptions> {
     let currentFS = system.fileSystem;
     for (const path of paths) {
       // Execute `mkdir` for this path
-      const newFS = createItemAt(currentFS, path, 'directory');
+      const newFS = currentFS.create(path, 'directory');
       if (!newFS) {
         print(`'${path}': no such file or directory`);
         return { system: { ...system, fileSystem: currentFS }, success: false };

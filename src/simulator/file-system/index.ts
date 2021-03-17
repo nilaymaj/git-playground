@@ -8,120 +8,148 @@ export type FileBlob = {
 };
 
 export type FileName = string;
-export type FileSystem = Tree<FileBlob, FileName>;
+export type FileSystemTree = Tree<FileBlob, FileName>;
 export type FileSystemNode = TreeNode<FileBlob, FileName>;
 export type FileSystemInternalNode = TreeInternalNode<FileBlob, FileName>;
 export type FileSystemPath = TreePath<FileName>;
 
 /**
- * Generates new file blob with unique "contents"
- *
- * @param {string} [token] Sets unique content token to provided string. Use ONLY for testing purposes.
+ * A simple in-memory file system with support CRUD-like
+ * operations and copy-move functionality.
  */
-export const generateFileBlob = (token?: string): FileBlob => ({
-  contentToken: token || uuid(),
-  version: 0,
-});
+export default class FileSystem {
+  _fs: FileSystemTree;
 
-/**
- * Creates a new blank file system
- */
-export const createFileSystem = (): FileSystem => {
-  return new Tree();
-};
+  /**
+   * Create a new FileSystem, optionally with the provided
+   * file system tree or tree node.
+   */
+  constructor(fs?: FileSystemTree | FileSystemInternalNode) {
+    if (!fs) this._fs = new Tree();
+    else {
+      if (fs instanceof Tree) this._fs = fs;
+      else this._fs = new Tree(fs);
+    }
+  }
 
-/**
- * Returns file/directory at given path in file system.
- * Invalid path returns null. Empty path returns root directory.
- */
-export const getItemAt = (
-  fileSystem: FileSystem,
-  path: FileSystemPath
-): FileSystemNode | null => {
-  return fileSystem.get(path);
-};
+  /**
+   * Immutability helper class: Use this to return a new
+   * FileSystem instance with updated file tree.
+   */
+  private updatedClass = (newFS: FileSystemTree): FileSystem => {
+    if (newFS === this._fs) return this;
+    else return new FileSystem(newFS);
+  };
 
-/**
- * Creates a new file at given path in file system.
- * Throws if specified path is invalid, or file already exists.
- *
- * Does NOT create any intermediate directories.
- */
-export const createItemAt = (
-  fileSystem: FileSystem,
-  path: FileSystemPath,
-  type: 'file' | 'directory'
-): FileSystem => {
-  const item = type === 'file' ? generateFileBlob() : undefined;
-  return fileSystem.insert(path, item);
-};
+  /**
+   * Check whether the provided node is a file blob.
+   */
+  static isFile = (node?: FileSystemNode | null): node is FileBlob => {
+    if (!node) return false;
+    return Tree.isLeafNode(node);
+  };
 
-/**
- * Deletes file/directory at given path in file system.
- * Throws if path does not exist.
- */
-export const deleteItemAt = (
-  fileSystem: FileSystem,
-  path: FileSystemPath
-): FileSystem => {
-  const item = fileSystem.get(path);
-  if (!item) throw new InvalidArgError();
-  return fileSystem.remove(path);
-};
+  /**
+   * Check whether the provided node is a directory node.
+   */
+  static isDirectory = (
+    node?: FileSystemNode | null
+  ): node is FileSystemInternalNode => {
+    if (!node) return false;
+    return Tree.isInternalNode(node);
+  };
 
-/**
- * Bump file version at given path in file system.
- * Throws if path is invalid or leads to internal node
- */
-export const bumpFileVersionAt = (
-  fileSystem: FileSystem,
-  path: FileSystemPath
-): FileSystem => {
-  if (path.length === 0) throw new InvalidArgError();
-  const file = getItemAt(fileSystem, path);
-  if (!Tree.isLeafNode(file)) throw new InvalidArgError();
-  const newFile = { ...file, version: file.version + 1 };
-  return fileSystem.update(path, newFile);
-};
+  /**
+   * Create a new file blob seeded randomly.
+   *
+   * @param token Use this to override the random seed.
+   * USE ONLY FOR TESTING.
+   */
+  static generateFileBlob = (token?: string): FileBlob => ({
+    contentToken: token || uuid(),
+    version: 0,
+  });
 
-/**
- * Move a file/directory from one location to another.
- * Returns success state of operation.
- *
- * - Overwrites existing item at destination path provided.
- * - Removes item at source by default. To disable this, pass `preserveSrc`.
- *
- * @param {FileSystem} fileSystem The file system object
- * @param {FileSystemPath} srcPath Path to the item to be copied
- * @param {FileSystemPath} destPath Destination path, including destination filename
- * @param {boolean} [preserveSrc] Pass `true` if source item should not be deleted
- */
-export const moveItem = (
-  fileSystem: FileSystem,
-  srcPath: FileSystemPath,
-  destPath: FileSystemPath,
-  preserveSrc?: boolean
-): FileSystem => {
-  // Validate source path
-  if (srcPath.length === 0) throw new InvalidArgError('Bad source');
-  const item = getItemAt(fileSystem, srcPath);
-  if (!item) throw new InvalidArgError('Bad source');
+  /**
+   * Get the node located at specified path in the file system.
+   */
+  get = (path: FileSystemPath): FileSystemNode | null => {
+    if (path.length === 0) return this._fs._tree;
+    return this._fs.get(path);
+  };
 
-  // Validate destination path
-  if (destPath.length === 0) throw new InvalidArgError('Bad destination');
-  const destDirPath = destPath.slice(0, -1);
-  const destDir = getItemAt(fileSystem, destDirPath);
-  if (!Tree.isInternalNode(destDir))
-    throw new InvalidArgError('Bad destination');
+  /**
+   * Create a new file or empty directory at the specified path.
+   *
+   * Throws if path terminates prematurely or already exists.
+   */
+  create = (path: FileSystemPath, type: 'file' | 'directory'): FileSystem => {
+    if (this.get(path)) throw new InvalidArgError('Already exists');
+    const item = type === 'file' ? FileSystem.generateFileBlob() : undefined;
+    const newFS = this._fs.insert(path, item);
+    return this.updatedClass(newFS);
+  };
 
-  // Make a copy of the item and move it
-  // 1. Remove the node already existing at destination
-  let fsWithoutDest = fileSystem;
-  if (fileSystem.get(destPath)) fsWithoutDest = fileSystem.remove(destPath);
-  // 2. Add the source item to the destination
-  const destItem = Tree.isLeafNode(item) ? { ...item } : item;
-  const newFS = fsWithoutDest.insert(destPath, destItem);
+  /**
+   * Delete node located at specified path in file system.
+   *
+   * Throws if path does not exist.
+   */
+  delete = (path: FileSystemPath): FileSystem => {
+    const item = this.get(path);
+    if (!item) throw new InvalidArgError();
+    const newFS = this._fs.remove(path);
+    return this.updatedClass(newFS);
+  };
 
-  // Remove the source item if required
-  return preserveSrc ? newFS : newFS.remove(srcPath);
-};
+  /**
+   * Bump the version of file located at specified path by 1.
+   *
+   * Throws if path does not lead to file.
+   */
+  bumpFileVersion = (path: FileSystemPath): FileSystem => {
+    if (path.length === 0) throw new InvalidArgError();
+    const file = this.get(path);
+    if (!FileSystem.isFile(file)) throw new InvalidArgError();
+    const newFile = { ...file, version: file.version + 1 };
+    const newFS = this._fs.update(path, newFile);
+    return this.updatedClass(newFS);
+  };
+
+  /**
+   * Move a node from one location in file system to another.
+   * Use with care: overwrites anything located at the destination path.
+   *
+   * Removes the node at source path by default. Pass `preserveSrc: true` to
+   * *copy* the node to destination instead.
+   */
+  move = (
+    srcPath: FileSystemPath,
+    destPath: FileSystemPath,
+    preserveSrc?: boolean
+  ): FileSystem => {
+    // Validate source path
+    if (srcPath.length === 0) throw new InvalidArgError('Bad source');
+    const item = this.get(srcPath);
+    if (!item) throw new InvalidArgError('Bad source');
+
+    // Validate destination path
+    if (destPath.length === 0) throw new InvalidArgError('Bad destination');
+    const destDirPath = destPath.slice(0, -1);
+    const destDir = this.get(destDirPath);
+    if (!FileSystem.isDirectory(destDir))
+      throw new InvalidArgError('Bad destination');
+
+    // Make a copy of the item and move it
+    // 1. Remove the node already existing at destination
+    const destExists = !!this._fs.get(destPath);
+    const fsWithoutDest = destExists ? this._fs.remove(destPath) : this._fs;
+    // 2. Add the source item to the destination
+    const destItem = FileSystem.isFile(item) ? { ...item } : item;
+    const fsWithDest = fsWithoutDest.insert(destPath, destItem);
+
+    // Remove the source item if required
+    const newFS = preserveSrc ? fsWithDest : fsWithDest.remove(srcPath);
+    return this.updatedClass(newFS);
+  };
+}

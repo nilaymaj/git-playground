@@ -7,14 +7,14 @@ import {
   GitObjectStorage,
   GitObjectAddress,
 } from './types';
-import { generateFileBlob } from '../../file-system';
+import FileSystem from '../../file-system';
 
 /**
  * Creates a sample unique Git blob object.
  */
 const createSampleBlob = (): GitBlob => ({
   type: 'blob',
-  fileData: generateFileBlob(),
+  fileData: FileSystem.generateFileBlob(),
 });
 
 /**

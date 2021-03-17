@@ -1,3 +1,4 @@
+import FileSystem from '../../file-system';
 import { createIndexFromGitTree } from '../../git-repository/index-file';
 import { readObject } from '../../git-repository/object-storage';
 import { serializeGitTree } from '../../git-repository/object-storage/utils';
@@ -102,7 +103,9 @@ export default class GitResetCommand implements Command<GitResetOptions> {
     // Hard: reset file system
     const serializedTree = serializeGitTree(commit.workTree, objectStorage);
     if (!serializedTree) throw new Error('Something is terribly wrong.');
-    const newFileSystem = serializedTree.convert((gb) => gb.fileData);
+    const newFileSystem = new FileSystem(
+      serializedTree.convert((gb) => gb.fileData)
+    );
     return successState(
       system,
       newFileSystem,

@@ -8,13 +8,16 @@ import { IndexFileItem } from './types';
 const validIndexFile = () => {
   const fs = createSampleFS();
   const objectStorage = createObjectStorage();
-  return Index.createIndexFromFileTree(fs._tree, objectStorage).indexFile;
+  return Index.createIndexFromFileTree(fs._fs._tree, objectStorage).indexFile;
 };
 
 const invalidIndexFile = () => {
   const fs = createSampleFS();
   const objectStorage = createObjectStorage();
-  const { indexFile } = Index.createIndexFromFileTree(fs._tree, objectStorage);
+  const { indexFile } = Index.createIndexFromFileTree(
+    fs._fs._tree,
+    objectStorage
+  );
   const newIndex = Index.upsert(indexFile, ['dir1', 'file1', 'file5'], {
     objectHash: 'foo',
   });

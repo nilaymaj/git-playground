@@ -4,7 +4,6 @@ import {
   CommandOptionsProfile,
   CommandOptionValues,
 } from '../types';
-import { createItemAt } from '../../file-system/index';
 import { SandboxState } from '../../types';
 import { parsePathString } from '../../utils/path-utils';
 
@@ -48,7 +47,7 @@ class CreateCommand implements Command<CreateOptions> {
 
     let currentFS = system.fileSystem;
     for (const path of paths) {
-      const newFS = createItemAt(currentFS, path, 'file');
+      const newFS = currentFS.create(path, 'file');
       if (!newFS) {
         print(`path "${path}" does not exist`);
         return { system: { ...system, fileSystem: currentFS }, success: false };

@@ -1,4 +1,4 @@
-import { FileSystem } from '../../file-system';
+import FileSystem from '../../file-system';
 import { createIndexFromGitTree } from '../../git-repository/index-file';
 import { readObject } from '../../git-repository/object-storage';
 import { GitObjectAddress } from '../../git-repository/object-storage/types';
@@ -68,8 +68,8 @@ export default class GitCheckoutCommand implements Command<GitCheckoutOptions> {
     if (!serializedTree) throw new Error('Commit does not point to Git tree!');
 
     // Create file system from work tree
-    const newFileSystem: FileSystem = serializedTree.convert(
-      (gitBlob) => gitBlob.fileData
+    const newFileSystem = new FileSystem(
+      serializedTree.convert((gitBlob) => gitBlob.fileData)
     );
 
     // Create index file from work tree

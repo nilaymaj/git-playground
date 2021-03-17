@@ -1,5 +1,4 @@
 import * as Index from './index';
-import * as FS from '../../file-system';
 import { FileBlob, FileSystemPath } from '../../file-system';
 import { createSampleFS } from '../../file-system/index.test';
 import { createObjectStorage } from '../object-storage';
@@ -14,7 +13,7 @@ const createSampleIndex = () => {
   const objectStorage = createObjectStorage();
   const fs = createSampleFS();
   const { indexFile, storage } = Index.createIndexFromFileTree(
-    fs._tree,
+    fs._fs._tree,
     objectStorage
   );
   return { indexFile, objectStorage: storage, fs };
@@ -30,25 +29,25 @@ test('Create index from file tree', () => {
   // Check if the index entries are right
   const indexItem0 = indexItems.get(0) as IndexArrayItem;
   expect(indexItem0.key).toStrictEqual(['dir1', 'dir2', 'file3']);
-  const file3 = FS.getItemAt(fs, ['dir1', 'dir2', 'file3']) as FileBlob;
+  const file3 = fs.get(['dir1', 'dir2', 'file3']) as FileBlob;
   const file3Hash = hashBlobObject({ type: 'blob', fileData: file3 });
   expect(indexItem0.value.objectHash).toBe(file3Hash);
 
   const indexItem1 = indexItems.get(1) as IndexArrayItem;
   expect(indexItem1.key).toStrictEqual(['dir1', 'file1']);
-  const file1 = FS.getItemAt(fs, ['dir1', 'file1']) as FileBlob;
+  const file1 = fs.get(['dir1', 'file1']) as FileBlob;
   const file1Hash = hashBlobObject({ type: 'blob', fileData: file1 });
   expect(indexItem1.value.objectHash).toBe(file1Hash);
 
   const indexItem2 = indexItems.get(2) as IndexArrayItem;
   expect(indexItem2.key).toStrictEqual(['dir1', 'file2']);
-  const file2 = FS.getItemAt(fs, ['dir1', 'file2']) as FileBlob;
+  const file2 = fs.get(['dir1', 'file2']) as FileBlob;
   const file2Hash = hashBlobObject({ type: 'blob', fileData: file2 });
   expect(indexItem2.value.objectHash).toBe(file2Hash);
 
   const indexItem3 = indexItems.get(3) as IndexArrayItem;
   expect(indexItem3.key).toStrictEqual(['file4']);
-  const file4 = FS.getItemAt(fs, ['file4']) as FileBlob;
+  const file4 = fs.get(['file4']) as FileBlob;
   const file4Hash = hashBlobObject({ type: 'blob', fileData: file4 });
   expect(indexItem3.value.objectHash).toBe(file4Hash);
 });
@@ -62,13 +61,13 @@ test('Get index entry', () => {
   expect(Index.getEntry(indexFile, ['dir1', '?'])).toBeNull();
 
   // Regular work day: get index entry for file under root
-  const file4 = FS.getItemAt(fs, ['file4']) as FileBlob;
+  const file4 = fs.get(['file4']) as FileBlob;
   const file4Hash = hashBlobObject({ type: 'blob', fileData: file4 });
   const indexEntry4 = Index.getEntry(indexFile, ['file4']);
   expect(indexEntry4?.objectHash).toBe(file4Hash);
 
   // Regular work day: get index entry for file at nested path
-  const file1 = FS.getItemAt(fs, ['dir1', 'file1']) as FileBlob;
+  const file1 = fs.get(['dir1', 'file1']) as FileBlob;
   const file1Hash = hashBlobObject({ type: 'blob', fileData: file1 });
   const indexEntry1 = Index.getEntry(indexFile, ['dir1', 'file1']);
   expect(indexEntry1?.objectHash).toBe(file1Hash);

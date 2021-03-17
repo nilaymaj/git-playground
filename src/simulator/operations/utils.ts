@@ -1,4 +1,4 @@
-import { FileSystem } from '../file-system';
+import FileSystem from '../file-system';
 import { IndexFile } from '../git-repository/index-file/types';
 import { GitObjectStorage } from '../git-repository/object-storage/types';
 import { GitRefStorage } from '../git-repository/ref-storage';

@@ -80,6 +80,7 @@
 .pane-body {
   flex-grow: 1;
   height: 100%;
+  overflow-y: auto;
 }
 
 .terminal-pane .pane-body {
@@ -96,22 +97,6 @@
   background-color: #3c4d63;
   color: white;
 }
-
-/************************
-  TERMINAL 
-************************/
-
-/*******************
-   FILE SYSTEM
-*******************/
-
-/*************************
-    OBJECT STORAGE
-*************************/
-
-/**********************
-    INDEX FILE VIEW
-**********************/
 
 @import '../node_modules/react-mosaic-component/react-mosaic-component.css';
 

@@ -6,10 +6,10 @@ import {
   CommandOptionsProfile,
   CommandOptionValues,
 } from '../types';
-import { getItemAt, moveItem } from '../../file-system';
 import Tree from '../../utils/tree';
 import { parsePathString } from '../../utils/path-utils';
 import { SandboxState } from '../../types';
+import { errorState, successState } from '../utils';
 
 interface CpOptions extends CommandOptionsProfile {}
 
@@ -67,22 +67,22 @@ export default class CpCommand implements Command<CpOptions> {
     print: (text: string) => void
   ): CommandExecReturn => {
     const srcItemName = args.srcPath[args.srcPath.length - 1];
-    const destParent = getItemAt(system.fileSystem, args.destPath.slice(0, -1));
-    const destNode = getItemAt(system.fileSystem, args.destPath);
+    const destParent = system.fileSystem.get(args.destPath.slice(0, -1));
+    const destNode = system.fileSystem.get(args.destPath);
     let fullDestPath = args.destPath;
     if (!destParent || Tree.isLeafNode(destParent)) {
       // Invalid destination path
       print('destination path does not exist');
-      return { system, success: false };
+      return errorState(system);
     } else if (destNode && !Tree.isLeafNode(destNode)) {
       // Provided destination is dir, add src item name to get full path
       fullDestPath = [...args.destPath, srcItemName];
     }
 
-    const newFS = moveItem(system.fileSystem, args.srcPath, fullDestPath, true);
+    const newFS = system.fileSystem.move(args.srcPath, fullDestPath, true);
     if (!newFS) {
       print('unknown error occured');
-      return { system, success: false };
+      return errorState(system);
     }
 
     return { system: { ...system, fileSystem: newFS }, success: true };
@@ -98,7 +98,7 @@ export default class CpCommand implements Command<CpOptions> {
     print: (text: string) => void
   ): CommandExecReturn => {
     // Ensure that the destination path is a directory
-    const destDir = getItemAt(system.fileSystem, args.destDirPath);
+    const destDir = system.fileSystem.get(args.destDirPath);
     if (!destDir || !Tree.isLeafNode(destDir)) {
       print(`destination '${args.destDirPath}' is not a directory`);
       return { system, success: false };
@@ -108,23 +108,23 @@ export default class CpCommand implements Command<CpOptions> {
     let currentFS = system.fileSystem;
     for (const srcPath of args.srcPaths) {
       // 1. Validate the source path
-      const srcItem = getItemAt(currentFS, srcPath);
+      const srcItem = currentFS.get(srcPath);
       if (srcPath.length === 0 || !srcItem) {
         print(`'${srcPath}': no such file or directory`);
-        return { system: { ...system, fileSystem: currentFS }, success: false };
+        return errorState(system, currentFS);
       }
 
       // 2. Copy source to destination
       const fullDestPath = [...args.destDirPath, srcPath[srcPath.length - 1]];
-      const newFS = moveItem(currentFS, srcPath, fullDestPath, true);
+      const newFS = currentFS.move(srcPath, fullDestPath, true);
       if (!newFS) {
         print('an unknown error occured');
-        return { system: { ...system, fileSystem: currentFS }, success: false };
+        return errorState(system, currentFS);
       }
       currentFS = newFS;
     }
 
-    return { system: { ...system, fileSystem: currentFS }, success: true };
+    return successState(system, currentFS);
   };
 }
 

@@ -1,4 +1,3 @@
-import { getItemAt } from '../../file-system';
 import {
   createEmptyIndex,
   createIndexFromFileTree,
@@ -46,7 +45,7 @@ export default class GitAddCommand implements Command<GitAddOptions> {
     let currentIndex = indexFile;
     let currentObjectStorage = objectStorage;
     for (const path of paths) {
-      const fsItem = getItemAt(fileSystem, path);
+      const fsItem = fileSystem.get(path);
       const indexSection = getPathSection(indexFile, path);
 
       if (!fsItem) {
