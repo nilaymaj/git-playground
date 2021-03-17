@@ -1,6 +1,7 @@
-import * as SortedArray from './sorted-array';
+import { InvalidArgError } from './errors';
+import SortedArray from './sorted-array';
 
-type NumberArray = SortedArray.SortedArray<number, string>;
+type NumberArray = SortedArray<number, string>;
 
 const compareNumbers = (a: number, b: number) => {
   if (a === b) return 0;
@@ -30,51 +31,53 @@ const sortedSampleData = () => [
  * ```
  */
 const createSampleArray = (): NumberArray =>
-  SortedArray.create(compareNumbers, sortedSampleData());
+  new SortedArray(compareNumbers, sortedSampleData(), true);
 
 test('New array is created correctly', () => {
-  const array1 = SortedArray.create<number, string>(compareNumbers);
-  expect(array1.items.toArray()).toStrictEqual([]);
-  expect(array1.compareFn(0, 1)).toBeLessThan(0);
-  expect(array1.compareFn(1, 0)).toBeGreaterThan(0);
-  expect(array1.compareFn(1, 1)).toBe(0);
+  const array1 = new SortedArray<number, string>(compareNumbers);
+  expect(array1._items.toArray()).toStrictEqual([]);
+  expect(array1._compareFn(0, 1)).toBeLessThan(0);
+  expect(array1._compareFn(1, 0)).toBeGreaterThan(0);
+  expect(array1._compareFn(1, 1)).toBe(0);
 
-  const array2 = SortedArray.create<number, string>(compareNumbers, []);
-  expect(array2.items.toArray()).toStrictEqual([]);
+  const array2 = new SortedArray<number, string>(compareNumbers, []);
+  expect(array2._items.toArray()).toStrictEqual([]);
 
-  const array3 = SortedArray.create<number, string>(
+  const array3 = new SortedArray<number, string>(
     compareNumbers,
     unsortedSampleData()
   );
-  expect(array3.items.toArray()).toStrictEqual(sortedSampleData());
+  expect(array3._items.toArray()).toStrictEqual(sortedSampleData());
 
   // Duplicate-key entries are not allowed:
   const badData = [...unsortedSampleData(), { key: 1, value: '?' }];
-  expect(() => SortedArray.create(compareNumbers, badData)).toThrow();
+  expect(() => new SortedArray(compareNumbers, badData)).toThrowError(
+    InvalidArgError
+  );
 });
 
 test('Get item by key', () => {
   const array = createSampleArray();
 
   // Return item and its index in the array
-  const resultFor1 = SortedArray.getByKey(array, 1);
+  const resultFor1 = array.get(1);
   expect(resultFor1.item).toStrictEqual({ key: 1, value: 'One' });
   expect(resultFor1.index).toBe(0);
 
-  const resultFor2 = SortedArray.getByKey(array, 2);
+  const resultFor2 = array.get(2);
   expect(resultFor2.item).toStrictEqual({ key: 2, value: 'Two' });
   expect(resultFor2.index).toBe(1);
 
   // Should return expected index for non-existing items
-  const resultFor0 = SortedArray.getByKey(array, 0);
+  const resultFor0 = array.get(0);
   expect(resultFor0.item).toBeNull();
   expect(resultFor0.index).toBe(0);
 
-  const resultFor2h = SortedArray.getByKey(array, 2.5);
+  const resultFor2h = array.get(2.5);
   expect(resultFor2h.item).toBeNull();
   expect(resultFor2h.index).toBe(2);
 
-  const resultFor5 = SortedArray.getByKey(array, 5);
+  const resultFor5 = array.get(5);
   expect(resultFor5.item).toBeNull();
   expect(resultFor5.index).toBe(3);
 });
@@ -83,40 +86,35 @@ test('Insert new item', () => {
   const array = createSampleArray();
 
   // Inserting a new item
-  const newArray1 = SortedArray.insert(array, {
+  const newArray1 = array.insert({
     key: 2.5,
     value: '?',
-  }) as NumberArray;
-  expect(newArray1).not.toBeNull();
-  expect(SortedArray.getByKey(newArray1, 2.5).index).toBe(2);
-  expect(SortedArray.getByKey(newArray1, 2.5).item).toStrictEqual({
+  });
+  expect(newArray1.get(2.5).index).toBe(2);
+  expect(newArray1.get(2.5).item).toStrictEqual({
     key: 2.5,
     value: '?',
   });
 
   // `upsert` shouldn't matter when inserting a new item
-  const newArray2 = SortedArray.insert(array, {
+  const newArray2 = array.insert({
     key: 3.5,
     value: '??',
-  }) as NumberArray;
-  expect(newArray2).not.toBeNull();
-  expect(SortedArray.getByKey(newArray2, 3.5).index).toBe(3);
-  expect(SortedArray.getByKey(newArray2, 3.5).item).toStrictEqual({
+  });
+  expect(newArray2.get(3.5).index).toBe(3);
+  expect(newArray2.get(3.5).item).toStrictEqual({
     key: 3.5,
     value: '??',
   });
 
   // Trying to insert an item that already exists won't work...
-  expect(SortedArray.insert(array, { key: 2, value: '?' })).toBe(null);
+  expect(() => array.insert({ key: 2, value: '?' })).toThrowError(
+    InvalidArgError
+  );
   // ...unless you pass the `upsert` flag, which will update the value.
-  const newArray3 = SortedArray.insert(
-    array,
-    { key: 2, value: '?' },
-    true
-  ) as NumberArray;
-  expect(newArray3).not.toBeNull();
-  expect(SortedArray.getByKey(newArray3, 2).index).toBe(1);
-  expect(SortedArray.getByKey(newArray3, 2).item).toStrictEqual({
+  const newArray3 = array.insert({ key: 2, value: '?' }, true);
+  expect(newArray3.get(2).index).toBe(1);
+  expect(newArray3.get(2).item).toStrictEqual({
     key: 2,
     value: '?',
   });
@@ -126,30 +124,27 @@ test('Update an existing item', () => {
   const array = createSampleArray();
 
   // Updating an existing item
-  const newArray1 = SortedArray.update(array, 2, 'foo') as NumberArray;
-  expect(newArray1).not.toBeNull();
-  expect(SortedArray.getByKey(newArray1, 2).index).toBe(1);
-  expect(SortedArray.getByKey(newArray1, 2).item).toStrictEqual({
+  const newArray1 = array.update(2, 'foo');
+  expect(newArray1.get(2).index).toBe(1);
+  expect(newArray1.get(2).item).toStrictEqual({
     key: 2,
     value: 'foo',
   });
 
   // `upsert` shouldn't matter when updating an existing item
-  const newArray2 = SortedArray.update(array, 2, 'bar', true) as NumberArray;
-  expect(newArray2).not.toBeNull();
-  expect(SortedArray.getByKey(newArray2, 2).index).toBe(1);
-  expect(SortedArray.getByKey(newArray2, 2).item).toStrictEqual({
+  const newArray2 = array.update(2, 'bar', true);
+  expect(newArray2.get(2).index).toBe(1);
+  expect(newArray2.get(2).item).toStrictEqual({
     key: 2,
     value: 'bar',
   });
 
   // Trying to update an item that doesn't exist won't work...
-  expect(SortedArray.update(array, 2.5, 'baz')).toBeNull();
+  expect(() => array.update(2.5, 'baz')).toThrowError(InvalidArgError);
   // ...unless you pass the `upsert` flag, which will insert new item.
-  const newArray3 = SortedArray.update(array, 2.5, 'baz', true) as NumberArray;
-  expect(newArray3).not.toBeNull();
-  expect(SortedArray.getByKey(newArray3, 2.5).index).toBe(2);
-  expect(SortedArray.getByKey(newArray3, 2.5).item).toStrictEqual({
+  const newArray3 = array.update(2.5, 'baz', true);
+  expect(newArray3.get(2.5).index).toBe(2);
+  expect(newArray3.get(2.5).item).toStrictEqual({
     key: 2.5,
     value: 'baz',
   });
@@ -158,13 +153,12 @@ test('Update an existing item', () => {
 test('Delete an item', () => {
   const array = createSampleArray();
 
-  const newArray = SortedArray.deleteItem(array, 1) as NumberArray;
-  expect(newArray).not.toBeNull();
-  expect(SortedArray.getByKey(newArray, 1).item).toBeNull();
-  expect(SortedArray.getByKey(newArray, 2).index).toBe(0);
+  const newArray = array.remove(1);
+  expect(newArray.get(1).item).toBeNull();
+  expect(newArray.get(2).index).toBe(0);
 
   // Cannot delete items that don't exist
-  expect(SortedArray.deleteItem(array, 2.5)).toBeNull();
+  expect(() => array.remove(2.5)).toThrowError(InvalidArgError);
 });
 
 test('Search for range', () => {
@@ -179,25 +173,25 @@ test('Search for range', () => {
   };
 
   const searchFn1 = getSearchFn(2, 3);
-  expect(SortedArray.findRange(array, searchFn1)).toStrictEqual({
+  expect(array.findRange(searchFn1)).toStrictEqual({
     start: 1,
     end: 3,
   });
 
   const searchFn2 = getSearchFn(1, 3);
-  expect(SortedArray.findRange(array, searchFn2)).toStrictEqual({
+  expect(array.findRange(searchFn2)).toStrictEqual({
     start: 0,
     end: 3,
   });
 
   const searchFn3 = getSearchFn(1, 1);
-  expect(SortedArray.findRange(array, searchFn3)).toStrictEqual({
+  expect(array.findRange(searchFn3)).toStrictEqual({
     start: 0,
     end: 1,
   });
 
   const searchFn4 = getSearchFn(1.4, 1.6);
-  expect(SortedArray.findRange(array, searchFn4)).toStrictEqual({
+  expect(array.findRange(searchFn4)).toStrictEqual({
     start: 1,
     end: 1,
   });

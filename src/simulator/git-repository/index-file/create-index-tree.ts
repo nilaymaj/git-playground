@@ -1,4 +1,6 @@
 import { FileSystemPath } from '../../file-system';
+import { Apocalypse } from '../../utils/errors';
+import SortedArray from '../../utils/sorted-array';
 import Tree from '../../utils/tree';
 import { IndexFile, IndexFileItem } from './types';
 
@@ -18,15 +20,15 @@ export type IndexTree = Tree<IndexFileItem, string>;
  *     2. Else, recursively create index tree for chunk and attach to root tree.
  */
 export const createIndexTree = (index: IndexFile): IndexTree => {
-  const filePaths = index.items.toArray().map((entry) => entry.key);
+  const filePaths = index._items.toArray().map((entry) => entry.key);
   const chunks = getRootNameChunks(filePaths);
 
   return chunks.reduce((rootNode, chunk) => {
     // Check if chunk corresponds to file entry
     if (chunk.end - chunk.start === 1) {
       // Chunk may correspond to file entry...
-      const indexEntry = index.items.get(chunk.start);
-      if (!indexEntry) throw new Error(`This shouldn't happen.`);
+      const indexEntry = index.itemAt(chunk.start);
+      if (!indexEntry) throw new Apocalypse();
       if (indexEntry.key.length === 1) {
         // Chunk corresponds to file entry: add leaf to index tree
         return rootNode.insert([chunk.name], indexEntry.value);
@@ -34,10 +36,10 @@ export const createIndexTree = (index: IndexFile): IndexTree => {
     }
 
     // Create sub-index corresponding to chunk
-    const subIndexItems = index.items
+    const subIndexItems = index._items
       .slice(chunk.start, chunk.end)
       .map((item) => ({ ...item, key: item.key.slice(1) }));
-    const subIndex = { ...index, items: subIndexItems };
+    const subIndex = new SortedArray(index._compareFn, subIndexItems);
     // Recursively create index tree for sub-index
     const subIndexTree = createIndexTree(subIndex);
     // Attach sub-index tree to root node

@@ -1,5 +1,5 @@
 import { OrderedMap } from 'immutable';
-import { InvalidPathError } from './errors';
+import { InvalidArgError } from './errors';
 import { TreeInternalNode, TreeNode } from './tree';
 import Tree from './tree';
 
@@ -80,7 +80,7 @@ test('Leaves are inserted correctly', () => {
   expect(() => tree.insert(['a'], 10)).toThrow();
   // Can't insert leaf at path terminating prematurely
   expect(() => tree.insert(['b', 'z', 'w', '?'], 20)).toThrowError(
-    InvalidPathError
+    InvalidArgError
   );
 });
 
@@ -117,19 +117,19 @@ test('Nodes are deleted correctly', () => {
   expect(newTree2.get(['b', 'z'])).toBeNull();
 
   // Can't delete nodes that don't exist
-  expect(() => tree.remove(['a', '?'])).toThrowError(InvalidPathError);
-  expect(() => tree.remove(['b', 'x', '?'])).toThrowError(InvalidPathError);
+  expect(() => tree.remove(['a', '?'])).toThrowError(InvalidArgError);
+  expect(() => tree.remove(['b', 'x', '?'])).toThrowError(InvalidArgError);
   // Can't delete the root node
-  expect(() => tree.remove([])).toThrowError(InvalidPathError);
+  expect(() => tree.remove([])).toThrowError(InvalidArgError);
 });
 
 test('Leafs are updated correctly', () => {
   const tree = createSampleTree();
 
   // Can't update root node
-  expect(() => tree.update([], 5)).toThrowError(InvalidPathError);
+  expect(() => tree.update([], 5)).toThrowError(InvalidArgError);
   // Can't update nodes that don't exist
-  expect(() => tree.update(['c', '?'], 5)).toThrowError(InvalidPathError);
+  expect(() => tree.update(['c', '?'], 5)).toThrowError(InvalidArgError);
 
   // Regular work day: update value at a -> m to leaf
   const newTree1 = tree.update(['a', 'm'], 1.5);

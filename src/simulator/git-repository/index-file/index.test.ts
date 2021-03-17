@@ -1,6 +1,6 @@
 import * as Index from './index';
 import * as FS from '../../file-system';
-import { FileBlob, FileSystemPath } from '../../file-system/types';
+import { FileBlob, FileSystemPath } from '../../file-system';
 import { createSampleFS } from '../../file-system/index.test';
 import { createObjectStorage } from '../object-storage';
 import { hashBlobObject } from '../object-storage/hash-object';
@@ -14,7 +14,7 @@ const createSampleIndex = () => {
   const objectStorage = createObjectStorage();
   const fs = createSampleFS();
   const { indexFile, storage } = Index.createIndexFromFileTree(
-    fs,
+    fs._tree,
     objectStorage
   );
   return { indexFile, objectStorage: storage, fs };
@@ -22,7 +22,7 @@ const createSampleIndex = () => {
 
 test('Create index from file tree', () => {
   const { indexFile, fs } = createSampleIndex();
-  const indexItems = indexFile.items;
+  const indexItems = indexFile._items;
 
   // 4 files -> 4 index entries
   expect(indexItems.size).toBe(4);
@@ -141,8 +141,4 @@ test('Get path section of index file', () => {
   const section3 = Index.getPathSection(indexFile, ['file4']);
   expect(section3.start).toBe(3);
   expect(section3.end).toBe(4);
-});
-
-test('Overwrite section of index file', () => {
-  // @todo Write this test
 });

@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import Tree, { TreeInternalNode, TreeNode, TreePath } from '../utils/tree';
-import { InvalidPathError } from '../utils/errors';
+import { InvalidArgError } from '../utils/errors';
 
 export type FileBlob = {
   contentToken: string;
@@ -65,7 +65,7 @@ export const deleteItemAt = (
   path: FileSystemPath
 ): FileSystem => {
   const item = fileSystem.get(path);
-  if (!item) throw new InvalidPathError();
+  if (!item) throw new InvalidArgError();
   return fileSystem.remove(path);
 };
 
@@ -77,9 +77,9 @@ export const bumpFileVersionAt = (
   fileSystem: FileSystem,
   path: FileSystemPath
 ): FileSystem => {
-  if (path.length === 0) throw new InvalidPathError();
+  if (path.length === 0) throw new InvalidArgError();
   const file = getItemAt(fileSystem, path);
-  if (!Tree.isLeafNode(file)) throw new InvalidPathError();
+  if (!Tree.isLeafNode(file)) throw new InvalidArgError();
   const newFile = { ...file, version: file.version + 1 };
   return fileSystem.update(path, newFile);
 };
@@ -103,16 +103,16 @@ export const moveItem = (
   preserveSrc?: boolean
 ): FileSystem => {
   // Validate source path
-  if (srcPath.length === 0) throw new InvalidPathError('Bad source');
+  if (srcPath.length === 0) throw new InvalidArgError('Bad source');
   const item = getItemAt(fileSystem, srcPath);
-  if (!item) throw new InvalidPathError('Bad source');
+  if (!item) throw new InvalidArgError('Bad source');
 
   // Validate destination path
-  if (destPath.length === 0) throw new InvalidPathError('Bad destination');
+  if (destPath.length === 0) throw new InvalidArgError('Bad destination');
   const destDirPath = destPath.slice(0, -1);
   const destDir = getItemAt(fileSystem, destDirPath);
   if (!Tree.isInternalNode(destDir))
-    throw new InvalidPathError('Bad destination');
+    throw new InvalidArgError('Bad destination');
 
   // Make a copy of the item and move it
   // 1. Remove the node already existing at destination

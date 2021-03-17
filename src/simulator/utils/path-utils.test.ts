@@ -1,4 +1,4 @@
-import { FileSystemPath } from '../file-system/types';
+import { FileSystemPath } from '../file-system';
 import { isPrefix } from './path-utils';
 
 test('Is path1 prefix of path2', () => {

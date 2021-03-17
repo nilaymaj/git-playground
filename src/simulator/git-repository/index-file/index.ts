@@ -8,9 +8,10 @@ import {
   GitObjectStorage,
 } from '../object-storage/types';
 import { serializeGitTree } from '../object-storage/utils';
-import * as SortedArray from '../../utils/sorted-array';
+import SortedArray from '../../utils/sorted-array';
 import { IndexFile, IndexFileItem } from './types';
 import { isPrefix } from '../../utils/path-utils';
+import { Apocalypse } from '../../utils/errors';
 
 /**
  * Compare two strings lexicographically.
@@ -46,8 +47,7 @@ const comparePaths = (a: FileSystemPath, b: FileSystemPath): number => {
 /**
  * Creates a blank index file.
  */
-export const createEmptyIndex = (): IndexFile =>
-  SortedArray.create(comparePaths, []);
+export const createEmptyIndex = (): IndexFile => new SortedArray(comparePaths);
 
 /**
  * Create an index tree from given file system tree.
@@ -73,7 +73,7 @@ export const createIndexFromFileTree = (
   });
 
   // Pack the entries into a SortedArray
-  const newIndexFile = SortedArray.create(comparePaths, indexEntries);
+  const newIndexFile = new SortedArray(comparePaths, indexEntries);
   return { storage: newObjectStorage, indexFile: newIndexFile };
 };
 
@@ -102,7 +102,7 @@ export const createIndexFromGitTree = (
   });
 
   // Pack the entries into a SortedArray
-  return SortedArray.create(comparePaths, indexEntries);
+  return new SortedArray(comparePaths, indexEntries);
 };
 
 /**
@@ -114,7 +114,7 @@ export const getEntry = (
   path: FileSystemPath
 ): IndexFileItem | null => {
   if (path.length === 0) return null;
-  const item = SortedArray.getByKey(indexFile, path).item;
+  const item = indexFile.get(path).item;
   return item && item.value;
 };
 
@@ -130,9 +130,7 @@ export const upsert = (
   value: IndexFileItem
 ): IndexFile | null => {
   if (path.length === 0) return null;
-  const newIndex = SortedArray.update(indexFile, path, value, true);
-  if (!newIndex) throw new Error(`Index upsert shouldn't fail!`);
-  return newIndex;
+  return indexFile.update(path, value, true);
 };
 
 /**
@@ -145,7 +143,8 @@ export const remove = (
   path: FileSystemPath
 ): IndexFile | null => {
   if (path.length === 0) return null;
-  return SortedArray.deleteItem(indexFile, path);
+  if (!indexFile.get(path).item) return null;
+  return indexFile.remove(path);
 };
 
 /**
@@ -156,7 +155,7 @@ export const getPathSection = (
   indexFile: IndexFile,
   path: FileSystemPath
 ): { start: number; end: number } => {
-  return SortedArray.findRange(indexFile, (entryPath) => {
+  return indexFile.findRange((entryPath) => {
     const isSubpath = isPrefix(entryPath, path);
     if (isSubpath) return 0;
     return comparePaths(entryPath, path);
@@ -176,6 +175,8 @@ export const getPathSection = (
  * @param indexFile The index file, a part of which is to be overwritten.
  * @param path Determines the section of index file to be overwritten.
  * @param subIndex The replacement for overwritten section.
+ *
+ * @todo Write tests for this!
  */
 export const overwriteSection = (
   indexFile: IndexFile,
@@ -186,29 +187,27 @@ export const overwriteSection = (
   const sectionLimits = getPathSection(indexFile, path);
 
   // Validate that provided sub-index file fits in
-  if (subIndex.items.size !== 0) {
+  if (subIndex.size() !== 0) {
     if (sectionLimits.start > 0) {
       // Check the starting boundary
-      const itemBeforeSplit = indexFile.items.get(sectionLimits.start - 1);
-      const firstSubItem = subIndex.items.get(0);
-      if (!itemBeforeSplit || !firstSubItem)
-        throw new Error(`This shouldn't happen!`);
+      const itemBeforeSplit = indexFile.itemAt(sectionLimits.start - 1);
+      const firstSubItem = subIndex.itemAt(0);
+      if (!itemBeforeSplit || !firstSubItem) throw new Apocalypse();
       if (comparePaths(itemBeforeSplit.key, firstSubItem.key) !== -1)
         return null;
     }
-    if (sectionLimits.end < indexFile.items.size) {
+    if (sectionLimits.end < indexFile.size()) {
       // Check the ending boundary
-      const itemAfterSplit = indexFile.items.get(sectionLimits.end);
-      const lastSubItem = subIndex.items.get(subIndex.items.size - 1);
-      if (!itemAfterSplit || !lastSubItem)
-        throw new Error(`This shouldn't happen!`);
+      const itemAfterSplit = indexFile.itemAt(sectionLimits.end);
+      const lastSubItem = subIndex.itemAt(subIndex.size() - 1);
+      if (!itemAfterSplit || !lastSubItem) throw new Apocalypse();
       if (comparePaths(itemAfterSplit.key, lastSubItem.key) !== 1) return null;
     }
   }
 
   // Insert the provided sub-index array
-  const preSection = indexFile.items.slice(0, sectionLimits.start);
-  const postSection = indexFile.items.slice(sectionLimits.end);
-  const newIndexRawItems = [...preSection, ...subIndex.items, ...postSection];
-  return SortedArray.create(comparePaths, newIndexRawItems);
+  const preSection = indexFile._items.slice(0, sectionLimits.start);
+  const postSection = indexFile._items.slice(sectionLimits.end);
+  const newIndexRawItems = [...preSection, ...subIndex._items, ...postSection];
+  return new SortedArray(comparePaths, newIndexRawItems, true);
 };

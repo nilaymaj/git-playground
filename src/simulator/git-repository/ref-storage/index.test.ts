@@ -1,5 +1,5 @@
 import { OrderedMap } from 'immutable';
-import { InvalidPathError } from '../../utils/errors';
+import { InvalidArgError } from '../../utils/errors';
 import Tree from '../../utils/tree';
 import * as Ref from './index';
 
@@ -34,15 +34,15 @@ test('Can create refs', () => {
 
   // Can't create refs at invalid paths
   expect(() => Ref.createRefAt(storage, [], 'addr')).toThrowError(
-    InvalidPathError
+    InvalidArgError
   );
   expect(() => Ref.createRefAt(storage, ['master'], 'addr')).toThrowError(
-    InvalidPathError
+    InvalidArgError
   );
   // Can't create refs that already exist
   expect(() =>
     Ref.createRefAt(storage, ['feature', 'f1'], 'addr')
-  ).toThrowError(InvalidPathError);
+  ).toThrowError(InvalidArgError);
 
   // Regular work day: create direct (unnested) ref
   const newRefStorage2 = Ref.createRefAt(storage, ['bug'], 'addr');
@@ -57,13 +57,11 @@ test('Can delete refs', () => {
   const storage = createSampleRefStorage();
 
   // Can't delete non-existent and non-leaf refs
-  expect(() => Ref.deleteLeafRef(storage, ['?'])).toThrowError(
-    InvalidPathError
-  );
+  expect(() => Ref.deleteLeafRef(storage, ['?'])).toThrowError(InvalidArgError);
   expect(() => Ref.deleteLeafRef(storage, ['feature'])).toThrowError(
-    InvalidPathError
+    InvalidArgError
   );
-  expect(() => Ref.deleteLeafRef(storage, [])).toThrowError(InvalidPathError);
+  expect(() => Ref.deleteLeafRef(storage, [])).toThrowError(InvalidArgError);
 
   const newStorage = Ref.deleteLeafRef(storage, ['feature', 'f2']);
   expect(Ref.readRefAt(newStorage, ['feature', 'f2'])).toBeNull();
@@ -75,13 +73,13 @@ test('Can read children of ref folder', () => {
 
   // Can't read contents of non-existent or leaf refs
   expect(() => Ref.getRefContentsAt(storage, ['?'])).toThrowError(
-    InvalidPathError
+    InvalidArgError
   );
   expect(() => Ref.getRefContentsAt(storage, ['feature', 'f1'])).toThrowError(
-    InvalidPathError
+    InvalidArgError
   );
   expect(() => Ref.getRefContentsAt(storage, ['feature', 'f3'])).toThrowError(
-    InvalidPathError
+    InvalidArgError
   );
 
   const featureChildren = [
@@ -101,14 +99,12 @@ test('Can read children of ref folder', () => {
 test('Can update commit hash at ref', () => {
   const storage = createSampleRefStorage();
 
-  expect(() => Ref.updateRefAt(storage, [], '?')).toThrowError(
-    InvalidPathError
-  );
+  expect(() => Ref.updateRefAt(storage, [], '?')).toThrowError(InvalidArgError);
   expect(() => Ref.updateRefAt(storage, ['feature'], '?')).toThrowError(
-    InvalidPathError
+    InvalidArgError
   );
   expect(() => Ref.updateRefAt(storage, ['?'], '?')).toThrowError(
-    InvalidPathError
+    InvalidArgError
   );
 
   const newStorage1 = Ref.updateRefAt(storage, ['master'], 'new_addr');

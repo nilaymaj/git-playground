@@ -9,7 +9,7 @@ type Props = {};
 export const IndexFileView = (props: Props) => {
   const repository = useRepository();
   const indexFile = repository.indexFile;
-  const indexItems = indexFile.items.toArray();
+  const indexItems = indexFile._items.toArray();
   const isEmptyIndex = indexItems.length === 0;
 
   return (

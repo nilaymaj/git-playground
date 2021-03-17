@@ -1,5 +1,5 @@
 import { OrderedMap } from 'immutable';
-import { InvalidPathError } from './errors';
+import { InvalidArgError } from './errors';
 
 /**
  * An internal node of the tree, containing
@@ -90,10 +90,10 @@ export default class Tree<L, N> {
    * Throws error if the path is invalid or node already exists.
    */
   insert = (path: TreePath<N>, node?: TreeNode<L, N>): Tree<L, N> => {
-    if (path.length === 0) throw new InvalidPathError();
+    if (path.length === 0) throw new InvalidArgError();
     // Check if parent node is valid
     const parentNode = this.get(path.slice(0, -1));
-    if (!Tree.isInternalNode(parentNode)) throw new InvalidPathError();
+    if (!Tree.isInternalNode(parentNode)) throw new InvalidArgError();
     // Check if node already exists at path
     const nodeName = path[path.length - 1];
     if (parentNode.has(nodeName)) throw new Error('Node already exists');
@@ -108,8 +108,8 @@ export default class Tree<L, N> {
    * Throws if path is empty or does not exist.
    */
   remove = (path: TreePath<N>): Tree<L, N> => {
-    if (path.length === 0) throw new InvalidPathError();
-    if (!this.get(path)) throw new InvalidPathError();
+    if (path.length === 0) throw new InvalidArgError();
+    if (!this.get(path)) throw new InvalidArgError();
     const newTree = this._tree.deleteIn(path);
     return this.updatedClass(newTree);
   };
@@ -121,9 +121,9 @@ export default class Tree<L, N> {
    * Throws if the path is invalid or the node does not exist.
    */
   update = (path: TreePath<N>, value: TreeNode<L, N>): Tree<L, N> => {
-    if (path.length === 0) throw new InvalidPathError();
+    if (path.length === 0) throw new InvalidArgError();
     const node = this.get(path);
-    if (!node) throw new InvalidPathError();
+    if (!node) throw new InvalidArgError();
     const newTree = this._tree.updateIn(path, null, () => value);
     return this.updatedClass(newTree);
   };
