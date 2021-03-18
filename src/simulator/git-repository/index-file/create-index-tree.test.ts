@@ -1,28 +1,22 @@
 import { createIndexTree } from './create-index-tree';
-import * as Index from './index';
+import IndexFile, { IndexFileItem } from './index';
 import { createSampleFS } from '../../file-system/index.test';
 import ObjectStorage from '../object-storage';
 import Tree from '../../utils/tree';
-import { IndexFileItem } from './types';
 
 const validIndexFile = () => {
   const fs = createSampleFS();
   const objectStorage = new ObjectStorage();
-  return Index.createIndexFromFileTree(fs._fs._tree, objectStorage).indexFile;
+  return IndexFile.fromFileTree(fs._fs._tree, objectStorage).indexFile;
 };
 
 const invalidIndexFile = () => {
   const fs = createSampleFS();
   const objectStorage = new ObjectStorage();
-  const { indexFile } = Index.createIndexFromFileTree(
-    fs._fs._tree,
-    objectStorage
-  );
-  const newIndex = Index.upsert(indexFile, ['dir1', 'file1', 'file5'], {
+  const { indexFile } = IndexFile.fromFileTree(fs._fs._tree, objectStorage);
+  return indexFile.upsert(['dir1', 'file1', 'file5'], {
     objectHash: 'foo',
   });
-  if (!newIndex) throw new Error(`This shouldn't happen.`);
-  return newIndex;
 };
 
 test('Valid index file -> index tree', () => {

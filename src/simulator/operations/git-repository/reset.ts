@@ -1,5 +1,5 @@
 import FileSystem from '../../file-system';
-import { createIndexFromGitTree } from '../../git-repository/index-file';
+import IndexFile from '../../git-repository/index-file';
 import { serializeGitTree } from '../../git-repository/object-storage/utils';
 import { updateHead } from '../../git-repository/utils';
 import { SandboxState } from '../../types';
@@ -87,8 +87,7 @@ export default class GitResetCommand implements Command<GitResetOptions> {
       return successState(system, null, null, null, newHead, newRefStorage);
 
     // Mixed/Hard: reset index file
-    const newIndexFile = createIndexFromGitTree(commit.workTree, objectStorage);
-    if (!newIndexFile) throw new Error('Something is terribly wrong.');
+    const newIndexFile = IndexFile.fromGitTree(objectStorage, tree);
     if (resetMode === 'mixed')
       return successState(
         system,
@@ -100,8 +99,7 @@ export default class GitResetCommand implements Command<GitResetOptions> {
       );
 
     // Hard: reset file system
-    const serializedTree = serializeGitTree(commit.workTree, objectStorage);
-    if (!serializedTree) throw new Error('Something is terribly wrong.');
+    const serializedTree = serializeGitTree(tree, objectStorage);
     const newFileSystem = new FileSystem(
       serializedTree.convert((gb) => gb.fileData)
     );

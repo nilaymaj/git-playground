@@ -1,9 +1,10 @@
 import FileSystem from '../../file-system';
-import { createIndexFromGitTree } from '../../git-repository/index-file';
+import IndexFile from '../../git-repository/index-file';
 import { GitObjectAddress } from '../../git-repository/object-storage/types';
 import { serializeGitTree } from '../../git-repository/object-storage/utils';
 import { GitHead } from '../../git-repository/types';
 import { SandboxState } from '../../types';
+import { Apocalypse } from '../../utils/errors';
 import {
   Command,
   CommandExecReturn,
@@ -63,8 +64,10 @@ export default class GitCheckoutCommand implements Command<GitCheckoutOptions> {
 
     // Get corresponding Git work tree and serialize it
     const gitTreeAddress = commitObject.workTree;
-    const serializedTree = serializeGitTree(gitTreeAddress, objectStorage);
-    if (!serializedTree) throw new Error('Commit does not point to Git tree!');
+    const gitWorkTree = objectStorage.read(gitTreeAddress);
+    if (!gitWorkTree || gitWorkTree.type !== 'tree')
+      throw new Apocalypse('Commit does not point to valid work tree!');
+    const serializedTree = serializeGitTree(gitWorkTree, objectStorage);
 
     // Create file system from work tree
     const newFileSystem = new FileSystem(
@@ -72,8 +75,7 @@ export default class GitCheckoutCommand implements Command<GitCheckoutOptions> {
     );
 
     // Create index file from work tree
-    const newIndexFile = createIndexFromGitTree(gitTreeAddress, objectStorage);
-    if (!newIndexFile) throw new Error(`This shouldn't happen.`);
+    const newIndexFile = IndexFile.fromGitTree(objectStorage, gitWorkTree);
 
     // Update HEAD
     const newHead: GitHead = { isDetached: true, destination: commitHash };

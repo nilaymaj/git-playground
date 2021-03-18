@@ -83,19 +83,9 @@
   overflow-y: auto;
 }
 
-.terminal-pane .pane-body {
-  padding-top: 0;
-}
-
 .pane-body pre {
   font-size: x-large;
   text-align: left;
-}
-
-.pane.terminal-pane {
-  border-color: #3c4d63;
-  background-color: #3c4d63;
-  color: white;
 }
 
 @import '../node_modules/react-mosaic-component/react-mosaic-component.css';

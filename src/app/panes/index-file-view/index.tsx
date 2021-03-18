@@ -9,7 +9,7 @@ type Props = {};
 export const IndexFileView = (props: Props) => {
   const repository = useRepository();
   const indexFile = repository.indexFile;
-  const indexItems = indexFile._items.toArray();
+  const indexItems = indexFile.entries();
   const isEmptyIndex = indexItems.length === 0;
 
   return (
@@ -20,9 +20,9 @@ export const IndexFileView = (props: Props) => {
         ) : (
           indexItems.map((item) => (
             <IndexItemRow
-              key={getPathString(item.key)}
-              path={item.key}
-              indexItem={item.value}
+              key={getPathString(item.path)}
+              path={item.path}
+              indexItem={item.entry}
             />
           ))
         )}

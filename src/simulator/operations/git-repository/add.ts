@@ -1,9 +1,4 @@
-import {
-  createEmptyIndex,
-  createIndexFromFileTree,
-  getPathSection,
-  overwriteSection,
-} from '../../git-repository/index-file';
+import IndexFile from '../../git-repository/index-file';
 import { SandboxState } from '../../types';
 import { parsePathString } from '../../utils/path-utils';
 import {
@@ -46,7 +41,7 @@ export default class GitAddCommand implements Command<GitAddOptions> {
     let currentObjectStorage = objectStorage;
     for (const path of paths) {
       const fsItem = fileSystem.get(path);
-      const indexSection = getPathSection(indexFile, path);
+      const indexSection = indexFile.getPathSection(path);
 
       if (!fsItem) {
         // No file/directory exists at specified path
@@ -56,21 +51,16 @@ export default class GitAddCommand implements Command<GitAddOptions> {
           return errorState(system, null, currentObjectStorage, currentIndex);
         }
         // 2. Else, path corresponds to deleted items
-        const newIndex = overwriteSection(
-          currentIndex,
-          path,
-          createEmptyIndex()
-        );
-        if (!newIndex) throw new Error(`This shouldn't happen.`);
+        const newIndex = currentIndex.overwriteSection(path, new IndexFile());
         currentIndex = newIndex;
       } else {
         // File/directory exists: create subindex and overwrite main index
         const {
           storage: newStorage,
           indexFile: subIndex,
-        } = createIndexFromFileTree(fsItem, currentObjectStorage, path);
+        } = IndexFile.fromFileTree(fsItem, currentObjectStorage, path);
         console.log(subIndex);
-        const newIndex = overwriteSection(currentIndex, path, subIndex);
+        const newIndex = currentIndex.overwriteSection(path, subIndex);
         if (!newIndex) throw new Error(`This shouldn't happen.`);
         currentIndex = newIndex;
         currentObjectStorage = newStorage;

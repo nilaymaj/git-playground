@@ -1,4 +1,4 @@
-import { IndexFile } from './index-file/types';
+import IndexFile from './index-file';
 import ObjectStorage from './object-storage';
 import { GitObjectAddress } from './object-storage/types';
 import RefStorage, { RefPath } from './ref-storage';

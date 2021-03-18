@@ -1,5 +1,5 @@
 import { FileSystemPath } from '../../../simulator/file-system';
-import { IndexFileItem } from '../../../simulator/git-repository/index-file/types';
+import { IndexFileItem } from '../../../simulator/git-repository/index-file';
 import { getPathString } from '../../../simulator/utils/path-utils';
 import { MonospaceChip } from '../../ui/monospace-chip';
 
