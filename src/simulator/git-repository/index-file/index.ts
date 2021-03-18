@@ -8,6 +8,7 @@ import SortedArray, { SortedArrayItem } from '../../utils/sorted-array';
 import { isPrefix } from '../../utils/path-utils';
 import { Apocalypse, InvalidArgError } from '../../utils/errors';
 import { List } from 'immutable';
+import { createIndexTree, IndexTree } from './create-index-tree';
 
 export interface IndexFileItem {
   objectHash: GitObjectAddress;
@@ -169,6 +170,14 @@ export default class IndexFile {
     if (!this._index.get(path).item) throw new InvalidArgError();
     const newIndex = this._index.remove(path);
     return this.updatedClass(newIndex);
+  };
+
+  /**
+   * Alias for `createIndexTree`. Converts the index file
+   * to a tree format.
+   */
+  toTree = (): IndexTree => {
+    return createIndexTree(this);
   };
 
   /**
