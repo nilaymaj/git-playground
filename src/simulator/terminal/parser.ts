@@ -1,4 +1,4 @@
-import minimist from 'minimist';
+import yargsParse from 'yargs-parser';
 import {
   Command,
   CommandOptions,
@@ -40,49 +40,32 @@ export default class Parser {
    * Returns `null` for invalid input or if no matching command is found on path.
    */
   parse = (input: string): ParsedInput | null => {
-    const inputWords = input.split(' ');
-    if (inputWords.length === 0) return null;
+    if (input.trim().length === 0) return null;
 
-    // Try taking first two words as command name
-    const parseAt2 = this.splitAndParseFrom(inputWords, 2);
-    if (parseAt2) return parseAt2;
+    // Find the command run, by testing each command name against start of input
+    const commandName = Object.keys(this.binPath).find((cmdName) => {
+      const cmdNamePrefix = cmdName + ' ';
+      return input.indexOf(cmdNamePrefix) === 0;
+    });
+    if (!commandName) return null;
 
-    // Try taking only first word as command name
-    const parseAt1 = this.splitAndParseFrom(inputWords, 1);
-    if (parseAt1) return parseAt1;
+    // Parse the opts-args part of input using the command's option config
+    const argSubstring = input.slice(commandName.length + 1);
+    const commandOptions = this.binPath[commandName].options;
+    const yargsOpts = this.createYargsOptions(commandOptions);
+    const parsed = yargsParse(argSubstring, yargsOpts);
 
-    return null;
-  };
-
-  /**
-   * Parse the given input, assuming that the first `cmdLength` words
-   * of the input represent the command name run.
-   *
-   * Returns `null` if input is invalid, or command does not exist in PATH
-   */
-  private splitAndParseFrom = (
-    inputWords: string[],
-    cmdLength: number
-  ): ParsedInput | null => {
-    if (inputWords.length < cmdLength) return null;
-    const commandName = inputWords.slice(0, cmdLength).join(' ');
-    const command = this.binPath[commandName];
-    if (!command) return null;
-
-    // Create minimist parser and parse input
-    const minimistOpts = this.createMinimistOptions(command.options);
-    const parsed = minimist(inputWords.slice(cmdLength), minimistOpts);
     const { _: args, '--': _o, ...opts } = parsed;
     return { command: commandName, args, opts };
   };
 
   /**
-   * Create Minimist-specific `opts` object for parsing
+   * Create yargs-specific `opts` object for parsing
    */
-  private createMinimistOptions = <T extends CommandOptionsProfile>(
+  private createYargsOptions = <T extends CommandOptionsProfile>(
     cmdOptions: CommandOptions<T>
-  ): minimist.Opts => {
-    const mOpts = {
+  ): yargsParse.Options => {
+    const yOpts = {
       string: [] as string[],
       boolean: [] as string[],
       alias: {} as { [key: string]: string | string[] },
@@ -90,11 +73,11 @@ export default class Parser {
 
     Object.keys(cmdOptions).forEach((optionName) => {
       const option = cmdOptions[optionName];
-      if (option.shortLetter) mOpts.alias[optionName] = option.shortLetter;
-      if (option.valueType === 'boolean') mOpts.boolean.push(optionName);
-      if (option.valueType === 'single') mOpts.string.push(optionName);
+      if (option.shortLetter) yOpts.alias[optionName] = option.shortLetter;
+      if (option.valueType === 'boolean') yOpts.boolean.push(optionName);
+      if (option.valueType === 'single') yOpts.string.push(optionName);
     });
 
-    return mOpts;
+    return yOpts;
   };
 }
