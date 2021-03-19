@@ -1,15 +1,8 @@
-import {
-  Command,
-  CommandExecReturn,
-  CommandOptions,
-  CommandOptionsProfile,
-  CommandOptionValues,
-} from '../types';
-import { SandboxState } from '../../types';
+import { Command, CommandOptions, CommandOptionsProfile } from '../types';
 import { parsePathString } from '../../utils/path-utils';
-import Tree from '../../utils/tree';
 import { errorState, successState } from '../utils';
 import { Apocalypse } from '../../utils/errors';
+import FileSystem from '../../file-system';
 
 interface RmOptions extends CommandOptionsProfile {
   recursive: 'boolean';
@@ -26,16 +19,11 @@ const rmOptions: CommandOptions<RmOptions> = {
 /**
  * Delete files or directories at specified paths, similar to UNIX `rm`.
  */
-export default class RmCommand implements Command<RmOptions> {
-  name = 'rm';
-  options = rmOptions;
+const rmCommand: Command<RmOptions> = {
+  name: 'rm',
+  options: rmOptions,
 
-  execute = (
-    system: SandboxState,
-    print: (text: string) => void,
-    opts: CommandOptionValues<RmOptions>,
-    args: string[]
-  ): CommandExecReturn => {
+  execute: (system, print, opts, args) => {
     const paths = args.map(parsePathString);
     if (paths.length === 0) {
       print('missing file operand');
@@ -49,7 +37,7 @@ export default class RmCommand implements Command<RmOptions> {
         // Path does not exist
         print(`'${path}': no such file or directory`);
         return errorState(system, currentFS);
-      } else if (!Tree.isLeafNode(node) && !opts.recursive) {
+      } else if (FileSystem.isDirectory(node) && !opts.recursive) {
         // Path is directory, and `recursive` not provided
         print(`'${path}': is a directory`);
         return errorState(system, currentFS);
@@ -62,5 +50,7 @@ export default class RmCommand implements Command<RmOptions> {
     }
 
     return successState(system, currentFS);
-  };
-}
+  },
+};
+
+export default rmCommand;

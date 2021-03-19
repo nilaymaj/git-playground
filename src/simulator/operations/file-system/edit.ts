@@ -1,12 +1,6 @@
-import {
-  Command,
-  CommandExecReturn,
-  CommandOptions,
-  CommandOptionsProfile,
-  CommandOptionValues,
-} from '../types';
+import { Command, CommandOptions, CommandOptionsProfile } from '../types';
 import { parsePathString } from '../../utils/path-utils';
-import { SandboxState } from '../../types';
+import { errorState, successState } from '../utils';
 
 interface EditOptions extends CommandOptionsProfile {}
 
@@ -15,21 +9,16 @@ const editOptions: CommandOptions<EditOptions> = {};
 /**
  * Bumps the file version of files at specified paths.
  */
-export default class EditCommand implements Command<EditOptions> {
-  name = 'edit';
-  options = editOptions;
+const editCommand: Command<EditOptions> = {
+  name: 'edit',
+  options: editOptions,
 
-  execute = (
-    system: SandboxState,
-    print: (text: string) => void,
-    _opts: CommandOptionValues<EditOptions>,
-    args: string[]
-  ): CommandExecReturn => {
+  execute: (system, print, _opts, args) => {
     const paths = args.map(parsePathString);
     if (paths.length === 0) {
       // No paths provided
       print('missing path operand');
-      return { system, success: false };
+      return errorState(system);
     }
 
     let currentFS = system.fileSystem;
@@ -38,11 +27,13 @@ export default class EditCommand implements Command<EditOptions> {
       const newFS = currentFS.bumpFileVersion(path);
       if (!newFS) {
         print(`'path' is not a file`);
-        return { system: { ...system, fileSystem: currentFS }, success: false };
+        return errorState(system, currentFS);
       }
       currentFS = newFS;
     }
 
-    return { system: { ...system, fileSystem: currentFS }, success: true };
-  };
-}
+    return successState(system, currentFS);
+  },
+};
+
+export default editCommand;

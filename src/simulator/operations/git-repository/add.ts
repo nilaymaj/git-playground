@@ -1,13 +1,6 @@
 import IndexFile from '../../git-repository/index-file';
-import { SandboxState } from '../../types';
 import { parsePathString } from '../../utils/path-utils';
-import {
-  Command,
-  CommandExecReturn,
-  CommandOptions,
-  CommandOptionsProfile,
-  CommandOptionValues,
-} from '../types';
+import { Command, CommandOptions, CommandOptionsProfile } from '../types';
 import { errorState, successState } from '../utils';
 
 interface GitAddOptions extends CommandOptionsProfile {}
@@ -18,16 +11,11 @@ const gitAddOptions: CommandOptions<GitAddOptions> = {};
  * Adds a list of paths to the index. For paths leading to directories,
  * adds all files inside the directory to index.
  */
-export default class GitAddCommand implements Command<GitAddOptions> {
-  name = 'git-add';
-  options = gitAddOptions;
+const gitAddCommand: Command<GitAddOptions> = {
+  name: 'git-add',
+  options: gitAddOptions,
 
-  execute = (
-    system: SandboxState,
-    print: (text: string) => void,
-    _opts: CommandOptionValues<GitAddOptions>,
-    args: string[]
-  ): CommandExecReturn => {
+  execute: (system, print, _opts, args) => {
     const { fileSystem } = system;
     const { objectStorage, indexFile } = system.repository;
 
@@ -68,5 +56,7 @@ export default class GitAddCommand implements Command<GitAddOptions> {
     }
 
     return successState(system, null, currentObjectStorage, currentIndex);
-  };
-}
+  },
+};
+
+export default gitAddCommand;

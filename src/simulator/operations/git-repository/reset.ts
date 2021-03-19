@@ -2,13 +2,11 @@ import FileSystem from '../../file-system';
 import IndexFile from '../../git-repository/index-file';
 import { serializeGitTree } from '../../git-repository/object-storage/utils';
 import { updateHead } from '../../git-repository/utils';
-import { SandboxState } from '../../types';
 import {
   Command,
   CommandOptions,
   CommandOptionsProfile,
   CommandOptionValues,
-  CommandExecReturn,
 } from '../types';
 import { errorState, successState } from '../utils';
 
@@ -34,40 +32,41 @@ const gitResetOptions: CommandOptions<GitResetOptions> = {
 };
 
 /**
+ * Parse arguments to get target commit.
+ */
+const parseArgs = (args: string[], print: (text: string) => void) => {
+  if (args.length === 0) print('missing target commit');
+  else if (args.length >= 2) print('too many operands');
+  else return args[0];
+};
+
+/**
+ * Parse options to get the reset mode (soft/mixed/hard).
+ */
+const getResetMode = (opts: CommandOptionValues<GitResetOptions>) => {
+  if (opts.soft) return 'soft';
+  else if (opts.mixed) return 'mixed';
+  else if (opts.hard) return 'hard';
+  else return 'mixed';
+};
+
+/**
  * Resets the current HEAD and head ref to the target commit provided.
  * Depending on reset mode, also resets the index file and file system.
  *
  * Returns success status of the operation.
  */
-export default class GitResetCommand implements Command<GitResetOptions> {
-  name = 'git-reset';
-  options = gitResetOptions;
+const gitResetCommand: Command<GitResetOptions> = {
+  name: 'git-reset',
+  options: gitResetOptions,
 
-  parse = (args: string[], print: (text: string) => void) => {
-    if (args.length === 0) print('missing target commit');
-    else if (args.length >= 2) print('too many operands');
-    else return args[0];
-  };
-
-  getMode = (opts: CommandOptionValues<GitResetOptions>) => {
-    if (opts.soft) return 'soft';
-    else if (opts.mixed) return 'mixed';
-    else if (opts.hard) return 'hard';
-    else return 'mixed';
-  };
-
-  execute = (
-    system: SandboxState,
-    print: (text: string) => void,
-    opts: CommandOptionValues<GitResetOptions>,
-    args: string[]
-  ): CommandExecReturn => {
+  execute: (system, print, opts, args) => {
     const { objectStorage, refStorage, head } = system.repository;
 
     // Parse to get target commit and reset mode
-    const targetCommitHash = this.parse(args, print);
+    const targetCommitHash = parseArgs(args, print);
     if (!targetCommitHash) return errorState(system);
-    const resetMode = this.getMode(opts);
+    const resetMode = getResetMode(opts);
 
     // Get the commit and work tree objects
     const commit = objectStorage.read(targetCommitHash);
@@ -111,5 +110,7 @@ export default class GitResetCommand implements Command<GitResetOptions> {
       newHead,
       newRefStorage
     );
-  };
-}
+  },
+};
+
+export default gitResetCommand;

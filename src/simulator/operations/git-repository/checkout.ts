@@ -3,15 +3,8 @@ import IndexFile from '../../git-repository/index-file';
 import { GitObjectAddress } from '../../git-repository/object-storage/types';
 import { serializeGitTree } from '../../git-repository/object-storage/utils';
 import { GitHead } from '../../git-repository/types';
-import { SandboxState } from '../../types';
 import { Apocalypse } from '../../utils/errors';
-import {
-  Command,
-  CommandExecReturn,
-  CommandOptions,
-  CommandOptionsProfile,
-  CommandOptionValues,
-} from '../types';
+import { Command, CommandOptions, CommandOptionsProfile } from '../types';
 import { errorState, successState } from '../utils';
 
 interface GitCheckoutOptions extends CommandOptionsProfile {}
@@ -19,40 +12,38 @@ interface GitCheckoutOptions extends CommandOptionsProfile {}
 const gitCheckoutOptions: CommandOptions<GitCheckoutOptions> = {};
 
 /**
+ * Parse the arguments to get target commit
+ */
+const parseArgs = (
+  args: string[],
+  print: (text: string) => void
+): GitObjectAddress | null => {
+  if (args.length === 0) {
+    // No arguments provided
+    print('missing target commit');
+    return null;
+  } else if (args.length >= 2) {
+    // Too many arguments provided
+    print('too many operands');
+    return null;
+  }
+
+  return args[0];
+};
+
+/**
  * Given the commit address, checks out a specific commit.
  * Updates file system and index file to commit snapshot.
  */
-export default class GitCheckoutCommand implements Command<GitCheckoutOptions> {
-  name = 'git-checkout';
-  options = gitCheckoutOptions;
+const gitCheckoutCommand: Command<GitCheckoutOptions> = {
+  name: 'git-checkout',
+  options: gitCheckoutOptions,
 
-  parse = (
-    args: string[],
-    print: (text: string) => void
-  ): GitObjectAddress | null => {
-    if (args.length === 0) {
-      // No arguments provided
-      print('missing target commit');
-      return null;
-    } else if (args.length >= 2) {
-      // Too many arguments provided
-      print('too many operands');
-      return null;
-    }
-
-    return args[0];
-  };
-
-  execute = (
-    system: SandboxState,
-    print: (text: string) => void,
-    opts: CommandOptionValues<GitCheckoutOptions>,
-    args: string[]
-  ): CommandExecReturn => {
+  execute: (system, print, _opts, args) => {
     const { objectStorage } = system.repository;
 
     // Parse arguments to get commit address
-    const commitHash = this.parse(args, print);
+    const commitHash = parseArgs(args, print);
     if (!commitHash) return errorState(system);
 
     // Get commit object from storage
@@ -83,5 +74,7 @@ export default class GitCheckoutCommand implements Command<GitCheckoutOptions> {
     // Return new system state
     print(`HEAD is now at ${commitHash.slice(-7)}`);
     return successState(system, newFileSystem, null, newIndexFile, newHead);
-  };
-}
+  },
+};
+
+export default gitCheckoutCommand;

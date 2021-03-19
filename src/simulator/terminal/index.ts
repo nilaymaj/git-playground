@@ -17,17 +17,17 @@ type ExecResult = {
 };
 
 const PATH: BinPath = {
-  create: new CreateCommand(),
-  edit: new EditCommand(),
-  mkdir: new MkdirCommand(),
-  rm: new RmCommand(),
-  cp: new CpCommand(),
-  mv: new MvCommand(),
+  create: CreateCommand,
+  edit: EditCommand,
+  mkdir: MkdirCommand,
+  rm: RmCommand,
+  cp: CpCommand,
+  mv: MvCommand,
 
-  'git add': new GitAddCommand(),
-  'git checkout': new GitCheckoutCommand(),
-  'git commit': new GitCommitCommand(),
-  'git reset': new GitResetCommand(),
+  'git add': GitAddCommand,
+  'git checkout': GitCheckoutCommand,
+  'git commit': GitCommitCommand,
+  'git reset': GitResetCommand,
 };
 
 class Terminal {

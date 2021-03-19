@@ -1,11 +1,6 @@
-import {
-  Command,
-  CommandOptions,
-  CommandOptionsProfile,
-  CommandOptionValues,
-} from '../types';
-import { SandboxState } from '../../types';
+import { Command, CommandOptions, CommandOptionsProfile } from '../types';
 import { parsePathString } from '../../utils/path-utils';
+import { errorState, successState } from '../utils';
 
 interface CreateOptions extends CommandOptionsProfile {
   throwErr: 'boolean';
@@ -19,30 +14,16 @@ const createOptions: CommandOptions<CreateOptions> = {
   },
 };
 
-/**
- * Creates new files at specified paths, similar to UNIX `touch`.
- */
-class CreateCommand implements Command<CreateOptions> {
-  name = 'create';
-  options = createOptions;
+const createCommand: Command<CreateOptions> = {
+  name: 'create',
+  options: createOptions,
 
-  parse = (args: string[]) => {
-    return args.map(parsePathString);
-  };
-
-  execute = (
-    system: SandboxState,
-    print: (text: string) => void,
-    opts: CommandOptionValues<CreateOptions>,
-    args: string[]
-  ) => {
+  execute: (system, print, opts, args) => {
     if (opts.throwErr) print('throwErr was passed!');
-    const paths = this.parse(args);
-    console.log(paths);
+    const paths = args.map(parsePathString);
     if (paths.length === 0) {
-      console.log('no file paths provided');
       print('no file paths provided');
-      return { system, success: false };
+      return errorState(system);
     }
 
     let currentFS = system.fileSystem;
@@ -50,13 +31,13 @@ class CreateCommand implements Command<CreateOptions> {
       const newFS = currentFS.create(path, 'file');
       if (!newFS) {
         print(`path "${path}" does not exist`);
-        return { system: { ...system, fileSystem: currentFS }, success: false };
+        return errorState(system, currentFS);
       }
       currentFS = newFS;
     }
-    const newSystem = { ...system, fileSystem: currentFS };
-    return { system: newSystem, success: true };
-  };
-}
 
-export default CreateCommand;
+    return successState(system, currentFS);
+  },
+};
+
+export default createCommand;
