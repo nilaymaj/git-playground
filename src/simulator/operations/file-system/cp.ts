@@ -1,109 +1,114 @@
-import { FileSystemPath } from '../../file-system';
+import FileSystem, { FileSystemPath } from '../../file-system';
 import {
   Command,
-  CommandExecReturn,
   CommandOptions,
   CommandOptionsProfile,
+  CommandOptionValues,
 } from '../types';
-import Tree from '../../utils/tree';
-import { parsePathString } from '../../utils/path-utils';
+import { getPathString, parsePathString } from '../../utils/path-utils';
 import { SandboxState } from '../../types';
 import { errorState, successState } from '../utils';
+import { Apocalypse } from '../../utils/errors';
 
-interface CpOptions extends CommandOptionsProfile {}
+interface CpOptions extends CommandOptionsProfile {
+  recursive: 'boolean';
+}
 
-const cpOptions: CommandOptions<CpOptions> = {};
-
-/**
- * Single-source format of UNIX `cp` command.
- * Copies single source to destination path.
- * If destination path is directory, copies to under the directory.
- */
-const copyTo = (
-  system: SandboxState,
-  args: CpToArgs,
-  print: (text: string) => void
-): CommandExecReturn => {
-  const srcItemName = args.srcPath[args.srcPath.length - 1];
-  const destParent = system.fileSystem.get(args.destPath.slice(0, -1));
-  const destNode = system.fileSystem.get(args.destPath);
-  let fullDestPath = args.destPath;
-  if (!destParent || Tree.isLeafNode(destParent)) {
-    // Invalid destination path
-    print('destination path does not exist');
-    return errorState(system);
-  } else if (destNode && !Tree.isLeafNode(destNode)) {
-    // Provided destination is dir, add src item name to get full path
-    fullDestPath = [...args.destPath, srcItemName];
-  }
-
-  const newFS = system.fileSystem.move(args.srcPath, fullDestPath, true);
-  if (!newFS) {
-    print('unknown error occured');
-    return errorState(system);
-  }
-
-  return { system: { ...system, fileSystem: newFS }, success: true };
+const cpOptions: CommandOptions<CpOptions> = {
+  recursive: {
+    shortLetter: 'r',
+    description: 'copy directories recursively',
+    valueType: 'boolean',
+  },
 };
 
 /**
- * Multiple-source format of UNIX `cp` command.
- * Copies source items to under destination directory.
+ * Validate that the source path is a valid path to copy from.
+ * Pass `noDirectory: true` if source is not allowed to be directory.
  */
-const copyUnder = (
+const validateSource = (
+  fs: FileSystem,
+  srcPath: FileSystemPath,
+  print: (text: string) => void,
+  noDirectory?: boolean
+): boolean => {
+  const srcPathDepth = fs.getPathDepth(srcPath);
+  console.log(srcPathDepth);
+  if (srcPathDepth !== 1 && srcPathDepth !== 2) {
+    print(`${getPathString(srcPath)}: invalid path`);
+    return false;
+  } else if (srcPathDepth === 1 && noDirectory) {
+    print(`-r not provided: omitting directory'${getPathString(srcPath)}'`);
+    return false;
+  } else return true;
+};
+
+/**
+ * Validate that the destination is a valid path to copy to.
+ * Pass `ensureDir: true` if destination must be directory.
+ */
+const validateDest = (
+  fs: FileSystem,
+  destPath: FileSystemPath,
+  print: (text: string) => void,
+  ensureDir?: boolean
+): boolean => {
+  const destPathDepth = fs.getPathDepth(destPath);
+  if (destPathDepth >= 4) {
+    // Parent is leaf or does not exist
+    print(`target '${getPathString(destPath)}' is not a directory`);
+    return false;
+  } else if (ensureDir && destPathDepth >= 2) {
+    // `ensureDir = true` but path is not a directory
+    print(`target '${getPathString(destPath)}' is not a directory`);
+    return false;
+  } else return true;
+};
+
+/**
+ * Handler for the `cp` command.
+ * Copy provided source items to the destination path.
+ */
+const copyItems = (
   system: SandboxState,
-  args: CpUnderArgs,
+  paths: FileSystemPath[],
+  opts: CommandOptionValues<CpOptions>,
   print: (text: string) => void
-): CommandExecReturn => {
-  // Ensure that the destination path is a directory
-  const destDir = system.fileSystem.get(args.destDirPath);
-  if (!destDir || !Tree.isLeafNode(destDir)) {
-    print(`destination '${args.destDirPath}' is not a directory`);
-    return { system, success: false };
+) => {
+  // `cp` takes atleast 2 arguments
+  if (paths.length < 2) {
+    print(`insufficient arguments`);
+    return errorState(system);
   }
 
-  // Move each item to the destination directory
-  let currentFS = system.fileSystem;
-  for (const srcPath of args.srcPaths) {
-    // 1. Validate the source path
-    const srcItem = currentFS.get(srcPath);
-    if (srcPath.length === 0 || !srcItem) {
-      print(`'${srcPath}': no such file or directory`);
-      return errorState(system, currentFS);
-    }
+  const srcPaths = paths.slice(0, -1);
+  const destPath = paths[paths.length - 1];
+  const multiSrc = srcPaths.length > 1;
+  const recursive = !!opts.recursive;
 
-    // 2. Copy source to destination
-    const fullDestPath = [...args.destDirPath, srcPath[srcPath.length - 1]];
-    const newFS = currentFS.move(srcPath, fullDestPath, true);
-    if (!newFS) {
-      print('an unknown error occured');
-      return errorState(system, currentFS);
-    }
+  // Validate the destination path - must be directory if multiple sources are provided
+  const destValid = validateDest(system.fileSystem, destPath, print, multiSrc);
+  if (!destValid) return errorState(system);
+
+  let currentFS = system.fileSystem;
+  for (const srcPath of srcPaths) {
+    // Validate source path - directories allowed only if recursive flag passed
+    const srcValid = validateSource(currentFS, srcPath, print, !recursive);
+    if (!srcValid) return errorState(system, currentFS);
+    const srcItemName = srcPath[srcPath.length - 1];
+
+    // Create the full destination path
+    const destNode = currentFS.get(destPath);
+    if (!destNode) throw new Apocalypse();
+    let fullDest = FileSystem.isFile(destNode)
+      ? destPath
+      : [...destPath, srcItemName];
+
+    const newFS = currentFS.move(srcPath, fullDest, true);
     currentFS = newFS;
   }
 
   return successState(system, currentFS);
-};
-
-/**
- * Check paths and execute the correct form
- * of copy command (single-source or multi-source).
- */
-const pickAndExecute = (
-  system: SandboxState,
-  paths: FileSystemPath[],
-  print: (text: string) => void
-): CommandExecReturn => {
-  if (paths.length === 2) {
-    // Single-source copy
-    const args = { srcPath: paths[0], destPath: paths[1] };
-    return copyTo(system, args, print);
-  } else {
-    // Multiple-source copy
-    const srcPaths = paths.slice(0, -1);
-    const destDirPath = paths[paths.length - 1];
-    return copyUnder(system, { srcPaths, destDirPath }, print);
-  }
 };
 
 /**
@@ -114,26 +119,10 @@ const cpCommand: Command<CpOptions> = {
   name: 'cp',
   options: cpOptions,
 
-  execute: (system, print, _opts, args) => {
+  execute: (system, print, opts, args) => {
     const paths = args.map(parsePathString);
-    if (paths.length === 0) {
-      print('no file paths provided');
-      return { system, success: false };
-    } else if (paths.length === 1) {
-      print('missing destination path');
-      return { system, success: false };
-    } else return pickAndExecute(system, paths, print);
+    return copyItems(system, paths, opts, print);
   },
 };
 
 export default cpCommand;
-
-type CpToArgs = {
-  srcPath: FileSystemPath;
-  destPath: FileSystemPath;
-};
-
-type CpUnderArgs = {
-  srcPaths: FileSystemPath[];
-  destDirPath: FileSystemPath;
-};

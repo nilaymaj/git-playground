@@ -21,6 +21,16 @@ export const parsePathString = (pathString: string): FileSystemPath => {
   return segments;
 };
 
+/**
+ * Convert a FileSystemPath to plain string path.
+ */
 export const getPathString = (path: FileSystemPath): string => {
   return path.join('/');
+};
+
+/**
+ * Return the parent path of the specified path.
+ */
+export const getParentPath = (path: FileSystemPath): FileSystemPath => {
+  return path.slice(0, -1);
 };
