@@ -66,8 +66,8 @@ const validateDest = (
 };
 
 /**
- * Handler for the `cp` command.
- * Copy provided source items to the destination path.
+ * Handler for the `mv` command.
+ * Move provided source items to the destination path.
  */
 const moveItems = (
   system: SandboxState,
@@ -112,8 +112,8 @@ const moveItems = (
 };
 
 /**
- * Copies files/directories at specified source paths
- * to the specified destination path. Similar to UNIX `cp`.
+ * Moves files/directories at specified source paths
+ * to the specified destination path. Similar to UNIX `mv`.
  */
 const mvCommand: Command<MvOptions> = {
   name: 'mv',
