@@ -1,5 +1,5 @@
 import { Command, CommandOptions, CommandOptionsProfile } from '../types';
-import { parsePathString } from '../../utils/path-utils';
+import { getPathString, parsePathString } from '../../utils/path-utils';
 import { errorState, successState } from '../utils';
 
 interface MkdirOptions extends CommandOptionsProfile {}
@@ -13,7 +13,7 @@ const mkdirCommand: Command<MkdirOptions> = {
   name: 'mkdir',
   options: mkdirOptions,
 
-  execute: (system, print, opts, args) => {
+  execute: (system, print, _opts, args) => {
     const paths = args.map(parsePathString);
     if (paths.length === 0) {
       // No paths provided
@@ -23,12 +23,14 @@ const mkdirCommand: Command<MkdirOptions> = {
 
     let currentFS = system.fileSystem;
     for (const path of paths) {
-      // Execute `mkdir` for this path
-      const newFS = currentFS.create(path, 'directory');
-      if (!newFS) {
-        print(`'${path}': no such file or directory`);
+      // Check if path is valid
+      const pathDepth = currentFS.getPathDepth(path);
+      if (pathDepth !== 3) {
+        print(`'${getPathString(path)}': invalid path`);
         return errorState(system, currentFS);
       }
+      // Execute `mkdir` for this path
+      const newFS = currentFS.create(path, 'directory');
       currentFS = newFS;
     }
 

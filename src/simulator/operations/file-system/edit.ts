@@ -1,5 +1,5 @@
 import { Command, CommandOptions, CommandOptionsProfile } from '../types';
-import { parsePathString } from '../../utils/path-utils';
+import { getPathString, parsePathString } from '../../utils/path-utils';
 import { errorState, successState } from '../utils';
 
 interface EditOptions extends CommandOptionsProfile {}
@@ -23,12 +23,14 @@ const editCommand: Command<EditOptions> = {
 
     let currentFS = system.fileSystem;
     for (const path of paths) {
-      // Bump file at current path
-      const newFS = currentFS.bumpFileVersion(path);
-      if (!newFS) {
-        print(`'path' is not a file`);
+      // Check if the node exists
+      const node = currentFS.get(path);
+      if (!node) {
+        print(`'${getPathString(path)}': not a file`);
         return errorState(system, currentFS);
       }
+      // Bump file at current path
+      const newFS = currentFS.bumpFileVersion(path);
       currentFS = newFS;
     }
 

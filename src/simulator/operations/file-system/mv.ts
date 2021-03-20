@@ -1,109 +1,114 @@
 import FileSystem, { FileSystemPath } from '../../file-system';
 import {
   Command,
-  CommandExecReturn,
   CommandOptions,
   CommandOptionsProfile,
+  CommandOptionValues,
 } from '../types';
-import Tree from '../../utils/tree';
-import { parsePathString } from '../../utils/path-utils';
+import { getPathString, parsePathString } from '../../utils/path-utils';
 import { SandboxState } from '../../types';
 import { errorState, successState } from '../utils';
+import { Apocalypse } from '../../utils/errors';
 
-interface MvOptions extends CommandOptionsProfile {}
+interface MvOptions extends CommandOptionsProfile {
+  recursive: 'boolean';
+}
 
-const mvOptions: CommandOptions<MvOptions> = {};
-
-/**
- * Single-source format of UNIX `mv` command.
- * Moves single source to destination path.
- * If destination path is directory, moves to under the directory.
- */
-const moveTo = (
-  system: SandboxState,
-  args: MvToArgs,
-  print: (text: string) => void
-): CommandExecReturn => {
-  const srcItemName = args.srcPath[args.srcPath.length - 1];
-  const destParent = system.fileSystem.get(args.destPath.slice(0, -1));
-  const destNode = system.fileSystem.get(args.destPath);
-  let fullDestPath = args.destPath;
-  if (!destParent || Tree.isLeafNode(destParent)) {
-    // Invalid destination path
-    print('destination path does not exist');
-    return errorState(system);
-  } else if (destNode && !Tree.isLeafNode(destNode)) {
-    // Provided destination is dir, add src item name to get full path
-    fullDestPath = [...args.destPath, srcItemName];
-  }
-
-  const newFS = system.fileSystem.move(args.srcPath, fullDestPath);
-  if (!newFS) {
-    print('unknown error occured');
-    return errorState(system);
-  }
-
-  return successState(system, newFS);
+const mvOptions: CommandOptions<MvOptions> = {
+  recursive: {
+    shortLetter: 'r',
+    description: 'copy directories recursively',
+    valueType: 'boolean',
+  },
 };
 
 /**
- * Multiple-source format of UNIX `mv` command.
- * Moves source items to under destination directory.
+ * Validate that the source path is a valid path to move from.
+ * Pass `noDirectory: true` if source is not allowed to be directory.
  */
-const moveUnder = (
+const validateSource = (
+  fs: FileSystem,
+  srcPath: FileSystemPath,
+  print: (text: string) => void,
+  noDirectory?: boolean
+): boolean => {
+  const srcPathDepth = fs.getPathDepth(srcPath);
+  console.log(srcPathDepth);
+  if (srcPathDepth !== 1 && srcPathDepth !== 2) {
+    print(`${getPathString(srcPath)}: invalid path`);
+    return false;
+  } else if (srcPathDepth === 1 && noDirectory) {
+    print(`-r not provided: omitting directory'${getPathString(srcPath)}'`);
+    return false;
+  } else return true;
+};
+
+/**
+ * Validate that the destination is a valid path to move to.
+ * Pass `ensureDir: true` if destination must be directory.
+ */
+const validateDest = (
+  fs: FileSystem,
+  destPath: FileSystemPath,
+  print: (text: string) => void,
+  ensureDir?: boolean
+): boolean => {
+  const destPathDepth = fs.getPathDepth(destPath);
+  if (destPathDepth >= 4) {
+    // Parent is leaf or does not exist
+    print(`target '${getPathString(destPath)}' is not a directory`);
+    return false;
+  } else if (ensureDir && destPathDepth >= 2) {
+    // `ensureDir = true` but path is not a directory
+    print(`target '${getPathString(destPath)}' is not a directory`);
+    return false;
+  } else return true;
+};
+
+/**
+ * Handler for the `cp` command.
+ * Copy provided source items to the destination path.
+ */
+const moveItems = (
   system: SandboxState,
-  args: MvUnderArgs,
+  paths: FileSystemPath[],
+  opts: CommandOptionValues<MvOptions>,
   print: (text: string) => void
-): CommandExecReturn => {
-  // Ensure that the destination path is a directory
-  const destDir = system.fileSystem.get(args.destDirPath);
-  if (!FileSystem.isDirectory(destDir)) {
-    print(`destination '${args.destDirPath}' is not a directory`);
+) => {
+  // `mv` takes atleast 2 arguments
+  if (paths.length < 2) {
+    print(`insufficient arguments`);
     return errorState(system);
   }
 
-  // Move each item to the destination directory
-  let currentFS = system.fileSystem;
-  for (const srcPath of args.srcPaths) {
-    // 1. Validate the source path
-    const srcItem = currentFS.get(srcPath);
-    if (srcPath.length === 0 || !srcItem) {
-      print(`'${srcPath}': no such file or directory`);
-      return errorState(system, currentFS);
-    }
+  const srcPaths = paths.slice(0, -1);
+  const destPath = paths[paths.length - 1];
+  const multiSrc = srcPaths.length > 1;
+  const recursive = !!opts.recursive;
 
-    // 2. Copy source to destination
-    const fullDestPath = [...args.destDirPath, srcPath[srcPath.length - 1]];
-    const newFS = currentFS.move(srcPath, fullDestPath);
-    if (!newFS) {
-      print('an unknown error occured');
-      return errorState(system, currentFS);
-    }
+  // Validate the destination path - must be directory if multiple sources are provided
+  const destValid = validateDest(system.fileSystem, destPath, print, multiSrc);
+  if (!destValid) return errorState(system);
+
+  let currentFS = system.fileSystem;
+  for (const srcPath of srcPaths) {
+    // Validate source path - directories allowed only if recursive flag passed
+    const srcValid = validateSource(currentFS, srcPath, print, !recursive);
+    if (!srcValid) return errorState(system, currentFS);
+    const srcItemName = srcPath[srcPath.length - 1];
+
+    // Create the full destination path
+    const destNode = currentFS.get(destPath);
+    if (!destNode) throw new Apocalypse();
+    let fullDest = FileSystem.isFile(destNode)
+      ? destPath
+      : [...destPath, srcItemName];
+
+    const newFS = currentFS.move(srcPath, fullDest);
     currentFS = newFS;
   }
 
   return successState(system, currentFS);
-};
-
-/**
- * Check paths and execute the correct form
- * of move command (single-source or multi-source).
- */
-const pickAndExecute = (
-  system: SandboxState,
-  paths: FileSystemPath[],
-  print: (text: string) => void
-): CommandExecReturn => {
-  if (paths.length === 2) {
-    // Single-source move
-    const args = { srcPath: paths[0], destPath: paths[1] };
-    return moveTo(system, args, print);
-  } else {
-    // Multiple-source move
-    const srcPaths = paths.slice(0, -1);
-    const destDirPath = paths[paths.length - 1];
-    return moveUnder(system, { srcPaths, destDirPath }, print);
-  }
 };
 
 /**
@@ -114,26 +119,10 @@ const mvCommand: Command<MvOptions> = {
   name: 'mv',
   options: mvOptions,
 
-  execute: (system, print, _opts, args) => {
+  execute: (system, print, opts, args) => {
     const paths = args.map(parsePathString);
-    if (paths.length === 0) {
-      print('no file paths provided');
-      return { system, success: false };
-    } else if (paths.length === 1) {
-      print('missing destination path');
-      return { system, success: false };
-    } else return pickAndExecute(system, paths, print);
+    return moveItems(system, paths, opts, print);
   },
 };
 
 export default mvCommand;
-
-type MvToArgs = {
-  srcPath: FileSystemPath;
-  destPath: FileSystemPath;
-};
-
-type MvUnderArgs = {
-  srcPaths: FileSystemPath[];
-  destDirPath: FileSystemPath;
-};

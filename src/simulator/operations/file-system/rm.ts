@@ -1,7 +1,6 @@
 import { Command, CommandOptions, CommandOptionsProfile } from '../types';
 import { parsePathString } from '../../utils/path-utils';
 import { errorState, successState } from '../utils';
-import { Apocalypse } from '../../utils/errors';
 import FileSystem from '../../file-system';
 
 interface RmOptions extends CommandOptionsProfile {
@@ -45,7 +44,6 @@ const rmCommand: Command<RmOptions> = {
 
       // Remove item and update FS
       const newFS = currentFS.delete(path);
-      if (!newFS) throw new Apocalypse();
       currentFS = newFS;
     }
 
