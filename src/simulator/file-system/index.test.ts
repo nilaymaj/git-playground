@@ -50,6 +50,29 @@ test('Get item at path', () => {
   expect(fs.get(['dir1', 'dir2', '?'])).toBeNull();
 });
 
+test('Get path depth', () => {
+  const fs = createSampleFS();
+
+  expect(fs.getPathDepth([])).toBe(0);
+
+  expect(fs.getPathDepth(['dir1'])).toBe(1);
+  expect(fs.getPathDepth(['dir1', 'dir2'])).toBe(1);
+
+  expect(fs.getPathDepth(['dir1', 'dir2', 'file3'])).toBe(2);
+  expect(fs.getPathDepth(['dir1', 'file1'])).toBe(2);
+  expect(fs.getPathDepth(['dir1', 'file2'])).toBe(2);
+  expect(fs.getPathDepth(['file4'])).toBe(2);
+
+  expect(fs.getPathDepth(['foo'])).toBe(3);
+  expect(fs.getPathDepth(['dir1', 'foo'])).toBe(3);
+  expect(fs.getPathDepth(['dir1', 'dir2', 'foo'])).toBe(3);
+
+  expect(fs.getPathDepth(['file4', 'foo'])).toBe(4);
+  expect(fs.getPathDepth(['dir1', 'file1', 'foo'])).toBe(4);
+
+  expect(fs.getPathDepth(['dir3', 'foo'])).toBe(5);
+});
+
 test('Create item at path', () => {
   const fs = createSampleFS();
 

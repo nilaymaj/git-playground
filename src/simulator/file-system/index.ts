@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import Tree, { TreeInternalNode, TreeNode, TreePath } from '../utils/tree';
 import { InvalidArgError } from '../utils/errors';
+import { getParentPath } from '../utils/path-utils';
 
 export type FileBlob = {
   contentToken: string;
@@ -76,6 +77,30 @@ export default class FileSystem {
   get = (path: FileSystemPath): FileSystemNode | null => {
     if (path.length === 0) return this._fs._tree;
     return this._fs.get(path);
+  };
+
+  /**
+   * Checks if a path lies inside, at the boundary or entirely
+   * outside the file system tree. Returns a number, representing:
+   *
+   * - 0: Path corresponds to root of filesystem
+   * - 1: Path leads to an internal node
+   * - 2: Path leads to a leaf of filesystem
+   * - 3: Path does not exist, parent is directory
+   * - 4: Path does not exist, parent is leaf
+   * - 5: Neither path nor its parent exists
+   */
+  getPathDepth = (path: FileSystemPath): number => {
+    if (path.length === 0) return 0;
+    // Check parent node
+    const parent = this.get(getParentPath(path));
+    if (!parent) return 5;
+    if (FileSystem.isFile(parent)) return 4;
+    // Parent is directory: check child node
+    const node = parent.get(path[path.length - 1]);
+    if (!node) return 3;
+    if (FileSystem.isFile(node)) return 2;
+    return 1;
   };
 
   /**
