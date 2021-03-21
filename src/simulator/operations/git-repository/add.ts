@@ -47,7 +47,6 @@ const gitAddCommand: Command<GitAddOptions> = {
           storage: newStorage,
           indexFile: subIndex,
         } = IndexFile.fromFileTree(fsItem, currentObjectStorage, path);
-        console.log(subIndex);
         const newIndex = currentIndex.overwriteSection(path, subIndex);
         if (!newIndex) throw new Error(`This shouldn't happen.`);
         currentIndex = newIndex;

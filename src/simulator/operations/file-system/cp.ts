@@ -37,7 +37,6 @@ const validateSource = (
   noDirectory?: boolean
 ): boolean => {
   const srcPathDepth = fs.getPathDepth(srcPath);
-  console.log(srcPathDepth);
   if (srcPathDepth !== 1 && srcPathDepth !== 2) {
     print(`${getPathString(srcPath)}: invalid path`);
     return false;
