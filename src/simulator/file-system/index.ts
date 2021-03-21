@@ -128,6 +128,19 @@ export default class FileSystem {
   };
 
   /**
+   * Check if item at specified path exists. If `type` is provided,
+   * also checks if the item matches provided type.
+   */
+  has = (path: FileSystemPath, type?: 'file' | 'directory'): boolean => {
+    const item = this.get(path);
+    if (!item) return false;
+    if (!type) return true;
+    if (type === 'file' && FileSystem.isFile(item)) return true;
+    if (type === 'directory' && FileSystem.isDirectory(item)) return true;
+    return false;
+  };
+
+  /**
    * Bump the version of file located at specified path by 1.
    *
    * Throws if path does not lead to file.

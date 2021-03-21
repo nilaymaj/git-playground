@@ -127,6 +127,26 @@ test('Delete item at path', () => {
   expect(() => fs.delete(['dir1', 'foo'])).toThrowError(InvalidArgError);
 });
 
+test('Check if fs has path', () => {
+  const fs = createSampleFS();
+
+  expect(fs.has([])).toBe(true);
+  expect(fs.has([], 'directory')).toBe(true);
+  expect(fs.has([], 'file')).toBe(false);
+
+  expect(fs.has(['dir1'])).toBe(true);
+  expect(fs.has(['dir1'], 'directory')).toBe(true);
+  expect(fs.has(['dir1'], 'file')).toBe(false);
+
+  expect(fs.has(['dir1', 'file1'])).toBe(true);
+  expect(fs.has(['dir1', 'file1'], 'directory')).toBe(false);
+  expect(fs.has(['dir1', 'file1'], 'file')).toBe(true);
+
+  expect(fs.has(['dir1', '?'])).toBe(false);
+  expect(fs.has(['dir1', '?'], 'directory')).toBe(false);
+  expect(fs.has(['dir1', '?'], 'file')).toBe(false);
+});
+
 test('Bump file version', () => {
   const fs = createSampleFS();
 
