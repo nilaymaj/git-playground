@@ -103,7 +103,7 @@ const moveItems = (
 
     // Create the full destination path
     const destNode = currentFS.get(destPath);
-    if (!destNode) throw new Apocalypse();
+    if (!destNode) throw new Apocalypse(); // (Item-renaming not implemented)
     let fullDest = FileSystem.isFile(destNode)
       ? destPath
       : [...destPath, srcItemName];
