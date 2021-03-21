@@ -5,7 +5,11 @@ import {
   CommandOptionsProfile,
   CommandOptionValues,
 } from '../types';
-import { getPathString, parsePathString } from '../../utils/path-utils';
+import {
+  getPathString,
+  isPrefix,
+  parsePathString,
+} from '../../utils/path-utils';
 import { SandboxState } from '../../types';
 import { errorState, successState } from '../utils';
 import { Apocalypse } from '../../utils/errors';
@@ -103,6 +107,19 @@ const copyItems = (
     let fullDest = FileSystem.isFile(destNode)
       ? destPath
       : [...destPath, srcItemName];
+
+    // Ensure destination is not subdir of source
+    if (isPrefix(fullDest, srcPath)) {
+      const destPathStr = getPathString(fullDest);
+      const srcPathStr = getPathString(srcPath);
+      if (fullDest.length === srcPath.length)
+        print(`'${srcPathStr}' and '${destPathStr}' are the same file`);
+      else
+        print(
+          `cannot copy a directory, '${srcPathStr}', into itself, '${destPathStr}'`
+        );
+      return errorState(system, currentFS);
+    }
 
     const newFS = currentFS.move(srcPath, fullDest, true);
     currentFS = newFS;
