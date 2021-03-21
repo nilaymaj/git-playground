@@ -24,9 +24,9 @@ const editCommand: Command<EditOptions> = {
     let currentFS = system.fileSystem;
     for (const path of paths) {
       // Check if the node exists
-      const node = currentFS.get(path);
-      if (!node) {
-        print(`'${getPathString(path)}': not a file`);
+      const nodeDepth = currentFS.getPathDepth(path);
+      if (nodeDepth !== 2) {
+        print(`'${getPathString(path)}': invalid path`);
         return errorState(system, currentFS);
       }
       // Bump file at current path

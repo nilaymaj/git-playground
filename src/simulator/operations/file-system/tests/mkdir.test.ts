@@ -1,5 +1,4 @@
 import { createNewSandbox } from '../../..';
-import FileSystem from '../../../file-system';
 import mkdirCommand from '../mkdir';
 import createCommand from '../create';
 
@@ -27,16 +26,16 @@ test('mkdir works', () => {
   // Regular working day: make a dir and its subdir successively
   const mkdir1 = mkdirCommand.execute(system, p, {}, ['foo', 'foo/bar']);
   expect(mkdir1.success).toBe(true);
-  const newFS1 = mkdir1.system.fileSystem;
-  const fooNode1 = newFS1.get(['foo']);
-  expect(FileSystem.isDirectory(fooNode1)).toBe(true);
-  const fooBarNode = newFS1.get(['foo', 'bar']);
-  expect(FileSystem.isDirectory(fooBarNode)).toBe(true);
+  expect(mkdir1.system.fileSystem.has(['foo'], 'directory')).toBe(true);
+  expect(mkdir1.system.fileSystem.has(['foo', 'bar'], 'directory')).toBe(true);
 
   // Regular working day: half-completed command works
   const mkdir2 = mkdirCommand.execute(system, p, {}, ['foo', 'bar/baz']);
   expect(mkdir2.success).toBe(false);
-  const newFS2 = mkdir2.system.fileSystem;
-  const fooNode2 = newFS2.get(['foo']);
-  expect(FileSystem.isDirectory(fooNode2)).toBe(true);
+  expect(mkdir2.system.fileSystem.has(['foo'], 'directory')).toBe(true);
+  expect(mkdir2.system.fileSystem.has(['bar'])).toBe(false);
+
+  // Fail if directory already exists at path
+  const mkdir3 = mkdirCommand.execute(mkdir2.system, p, {}, ['foo']);
+  expect(mkdir3.success).toBe(false);
 });
