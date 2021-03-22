@@ -66,4 +66,12 @@ export default class ObjectStorage {
     const newDB = this._db.delete(hash);
     return this.updatedClass(newDB);
   };
+
+  /**
+   * Get entries of the object storage
+   */
+  entries = (): { hash: GitObjectAddress; object: GitObject }[] => {
+    const dbEntries = [...this._db.entries()];
+    return dbEntries.map((a) => ({ hash: a[0], object: a[1] }));
+  };
 }

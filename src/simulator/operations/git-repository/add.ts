@@ -22,7 +22,7 @@ const gitAddCommand: Command<GitAddOptions> = {
     const paths = args.map(parsePathString);
     if (paths.length === 0) {
       print('missing path operand');
-      return { system, success: false };
+      return errorState(system);
     }
 
     let currentIndex = indexFile;
