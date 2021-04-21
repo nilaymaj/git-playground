@@ -10,82 +10,79 @@ Git operations are split into two broad parts:
 
 ### Committing changes
 
-- [ ] `add` a file/directory:
+- [x] `add` a file/directory:
   1. Create Git blob for file(s)
   2. Add file(s) metadata to index
-- [ ] `restore` a file/directory:
-  1. TODO
-- [ ] `commit`:
+- [x] `reset` to previous commit:
+  1. Get working tree from current commit
+  2. Reset HEAD and/or active ref to target
+  3. Depending on reset mode, apply tree to index and FS
+- [x] `commit`:
   1. Create tree object from index
   2. Create commit object with tree object and parent commit
   3. Update current branch tag to latest commit
 
 ### Checking out past history
 
-- [ ] `checkout`: Generate file system from work tree at HEAD commit
-  - Make sure file system is absolutely clean (no changes, no staged changes)
+- [x] `checkout`: Generate file system from work tree at HEAD commit
+  - TODO: Make sure file system and index are clean before proceeding
 
 ### Branch operations
 
 - [ ] `branch`: Create new branch ref, pointing to current commit
-- [ ] `merge`, `rebase`: TODO
-
-## Plumbing
-
-TODO
+- [ ] `merge`, `rebase`: TODO: Unimplemented
 
 ## Components
 
 ### Object storage
 
-- [x] Get object stored at hash
-- [x] Hash and store object
+The core of Git is a content-addressable key-value database, called the object storage.
+Every object (blob, tree, commit) in Git is stored against a hash of itself in the database.
+
+This has advantages:
+
+- All single-object operations are constant-time. These operations are the bulk of Git.
+- Almost zero space wastage, since redundant data is stored on the same key.
+
+Types of objects in Git:
+
+- **Blob**: Represents the contents of a file. Does not include file name, etc.
+- **Tree**: Represents a directory. Mainly consists of list of direct children,
+  where each child has a name and hash of the corresponding blob or tree.
+- **Commit**: Represents a commit - author, message, etc along with hash of associated working tree.
 
 ### Ref storage
 
-- [x] Get contents (commit/refs) at given ref path
-- [x] Update ref to given commit hash address
+Stores information for all refs ("branches"), organized in a tree format. At
+the leafs lie the refs, where each ref points to a commit hash.
 
-### Index
+### Index File
 
-Firstly, what the index is:
+This is the one not-so-intuitive part of Git internals. The index file maintains
+a sorted list of all **tracked files** in the repository. An example of the contents is:
 
-- Maintains a list/tree of all **tracked** files
-- Associates latest blob (current for unchanged, staged for changed) to list item
+```
+100644 a69de71385651014675448e192474314ca0ddbc4 0	src/simulator/utils/sorted-array.ts
+100644 fafd24cc5d7a4baf60e7b2025a3d9b771afdf3b3 0	src/simulator/utils/tree.test.ts
+100644 7517d60454a35e10c3c5f384334fe98eb647fd1a 0	src/simulator/utils/tree.ts
+100644 2d519b5ad927210dfc8c46dd1962fabe6f0f33b5 0	tsconfig.json
+100644 e84d9e718d77ffe53e6d761a3bc9618ded823c1e 0	yarn.lock
+```
 
-How to compute `git status` info:
+- The `100644` field contains mainly information about the file mode and permissions.
+- Next is the hash of the blob that the entry corresponds to.
+- The `0` field is a Git utility field used to track status of files in merges, rebases, etc.
+- The final field stores the path of the file.
+
+Some key points:
+
+- Only **files** are stored. The index file does not store information about directories.
+- Only **tracked** files are stored. Untracked and ignored files are not added to index.
+- When `git commit` is executed, it is the index file that directly forms the tree added to the commit.
+
+The index file plays a key role in the output of `git status`:
 
 - **Untracked (unstaged)**: Compare FS and index
 - **Modified (unstaged)**: Compare FS and index
 - **Deleted (unstaged)**: Compare FS and index
 - **All staged changes**: Compare index and work tree
-
-Required functionality:
-
-- [ ] Upsert entry for given file
-- [ ] Remove entry for given file
-
-========================================
-
-## Plumbing TODO
-
-- [ ] git-checkout-index(1)
-      Copy files from the index to the working tree.
-
-- [ ] git-commit-tree(1)
-      Create a new commit object.
-
-- [ ] git-hash-object(1)
-      Compute object ID and optionally creates a blob from a file.
-
-- [ ] git-read-tree(1)
-      Reads tree information into the index.
-
-- [ ] git-update-index(1)
-      Register file contents in the working tree to the index.
-
-- [ ] git-update-ref(1)
-      Update the object name stored in a ref safely.
-
-- [ ] git-write-tree(1)
-      Create a tree object from the current index.
