@@ -98,7 +98,8 @@ export default class Tree<L, N> {
     const nodeName = path[path.length - 1];
     if (parentNode.has(nodeName)) throw new Error('Node already exists');
     // Insert node and return new tree
-    const newTree = this._tree.setIn(path, node || OrderedMap());
+    const nodeToInsert = node === undefined ? OrderedMap() : node;
+    const newTree = this._tree.setIn(path, nodeToInsert);
     return this.updatedClass(newTree);
   };
 
@@ -123,7 +124,7 @@ export default class Tree<L, N> {
   update = (path: TreePath<N>, value: TreeNode<L, N>): Tree<L, N> => {
     if (path.length === 0) throw new InvalidArgError();
     const node = this.get(path);
-    if (!node) throw new InvalidArgError();
+    if (node === null) throw new InvalidArgError();
     const newTree = this._tree.updateIn(path, null, () => value);
     return this.updatedClass(newTree);
   };

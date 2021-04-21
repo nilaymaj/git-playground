@@ -1,8 +1,8 @@
 import FileSystem from '../../file-system';
+import GitHead from '../../git-repository/head';
 import IndexFile from '../../git-repository/index-file';
 import { GitObjectAddress } from '../../git-repository/object-storage/types';
 import { serializeGitTree } from '../../git-repository/object-storage/utils';
-import { GitHead } from '../../git-repository/types';
 import { Apocalypse } from '../../utils/errors';
 import { Command, CommandOptions, CommandOptionsProfile } from '../types';
 import { errorState, successState } from '../utils';
@@ -69,7 +69,7 @@ const gitCheckoutCommand: Command<GitCheckoutOptions> = {
     const newIndexFile = IndexFile.fromGitTree(objectStorage, gitWorkTree);
 
     // Update HEAD
-    const newHead: GitHead = { isDetached: true, destination: commitHash };
+    const newHead: GitHead = system.repository.head.detachTo(commitHash);
 
     // Return new system state
     print(`HEAD is now at ${commitHash.slice(-7)}`);

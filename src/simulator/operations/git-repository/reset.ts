@@ -1,7 +1,6 @@
 import FileSystem from '../../file-system';
 import IndexFile from '../../git-repository/index-file';
 import { serializeGitTree } from '../../git-repository/object-storage/utils';
-import { updateHead } from '../../git-repository/utils';
 import {
   Command,
   CommandOptions,
@@ -79,9 +78,10 @@ const gitResetCommand: Command<GitResetOptions> = {
       throw new Error('Inconsistent object storage');
 
     // Update HEAD to the target commit
-    const newRefStorage = updateHead(head, refStorage, targetCommitHash);
-    if (!newRefStorage) throw new Error('Commit points to invalid ref!');
-    const newHead = { ...head };
+    const { head: newHead, refStorage: newRefStorage } = head.advanceTo(
+      refStorage,
+      targetCommitHash
+    );
     if (resetMode === 'soft')
       return successState(system, null, null, null, newHead, newRefStorage);
 

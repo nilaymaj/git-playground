@@ -1,6 +1,7 @@
 import { GitObjectAddress } from '../object-storage/types';
 import Tree, { TreeInternalNode, TreeNode, TreePath } from '../../utils/tree';
 import { InvalidArgError } from '../../utils/errors';
+import { DEFAULT_BRANCH_NAME } from '../../constants';
 
 export type RefName = string;
 export type RefPath = TreePath<RefName>;
@@ -8,6 +9,11 @@ export type RefTreeLeaf = GitObjectAddress;
 export type RefTree = Tree<RefTreeLeaf, RefName>;
 export type RefTreeNode = TreeNode<RefTreeLeaf, RefName>;
 export type RefTreeInternalNode = TreeInternalNode<RefTreeLeaf, RefName>;
+
+const defaultBranchHeads: RefTree = new Tree<RefTreeLeaf, RefName>().insert(
+  [DEFAULT_BRANCH_NAME],
+  ''
+);
 
 /**
  * Represents the ref storage of a Git repository.
@@ -33,7 +39,7 @@ export default class RefStorage {
    * initialized with provided ref tree.
    */
   constructor(branchHeads?: RefTree | RefTreeInternalNode) {
-    if (!branchHeads) this._branchHeads = new Tree();
+    if (!branchHeads) this._branchHeads = defaultBranchHeads;
     else {
       if (branchHeads instanceof Tree) this._branchHeads = branchHeads;
       else this._branchHeads = new Tree(branchHeads);
@@ -53,7 +59,7 @@ export default class RefStorage {
    * Checks if the provided node is a leaf ref.
    */
   static isLeaf = (node: RefTreeNode | null): node is RefTreeLeaf => {
-    if (!node) return false;
+    if (node === null) return false;
     else return typeof node === 'string';
   };
 
@@ -121,7 +127,7 @@ export default class RefStorage {
   update = (path: RefPath, commitHash: GitObjectAddress): RefStorage => {
     if (path.length === 0) throw new InvalidArgError();
     const refNode = this._branchHeads.get(path);
-    if (!refNode || !RefStorage.isLeaf(refNode)) throw new InvalidArgError();
+    if (!RefStorage.isLeaf(refNode)) throw new InvalidArgError();
     const newRefTree = this._branchHeads.update(path, commitHash);
     return this.updatedClass(newRefTree);
   };

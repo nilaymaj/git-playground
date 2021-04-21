@@ -1,3 +1,4 @@
+import GitHead from './head';
 import IndexFile from './index-file';
 import ObjectStorage from './object-storage';
 import RefStorage from './ref-storage';
@@ -8,10 +9,6 @@ export const createNewRepository = (): GitRepository => {
     indexFile: new IndexFile(),
     objectStorage: new ObjectStorage(),
     refStorage: new RefStorage(),
-    head: {
-      isDetached: true,
-      // @todo HEAD value for new repo?
-      destination: '',
-    },
+    head: new GitHead(),
   };
 };

@@ -5,7 +5,6 @@ import {
   GitTree,
 } from '../../git-repository/object-storage/types';
 import Tree from '../../utils/tree';
-import { getHeadCommit, updateHead } from '../../git-repository/utils';
 import { errorState, successState } from '../utils';
 import ObjectStorage from '../../git-repository/object-storage';
 
@@ -78,8 +77,9 @@ const gitCommitCommand: Command<GitCommitOptions> = {
         indexTree,
         objectStorage
       );
+
       // Create new commit object
-      const parentCommit = getHeadCommit(system.repository.head, refStorage);
+      const parentCommit = system.repository.head.getTargetCommit(refStorage);
       const { storage, hash: commitHash } = tempStorage.write({
         type: 'commit',
         timestamp: new Date(),
@@ -89,18 +89,15 @@ const gitCommitCommand: Command<GitCommitOptions> = {
       });
 
       // Update HEAD and refs
-      const newRefStorage = updateHead(
-        system.repository.head,
-        refStorage,
-        commitHash
-      );
-      if (!newRefStorage) throw new Error(`This shouldn't happen.`);
-      const newHead = { ...system.repository.head };
+      const {
+        head: newHead,
+        refStorage: newRefStorage,
+      } = system.repository.head.advanceTo(refStorage, commitHash);
 
       return successState(system, null, storage, null, newHead, newRefStorage);
     } catch {
       // Point of error: call to `createIndexTree`
-      print(`invvalid index tree`);
+      print(`invalid index tree`);
       return errorState(system);
     }
   },

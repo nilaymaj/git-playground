@@ -17,6 +17,23 @@ const createSampleRefStorage = (): RefStorage => {
   return new RefStorage(branchHeads);
 };
 
+test('Classifies leaf from node', () => {
+  expect(RefStorage.isLeaf('xyz')).toBe(true);
+  expect(RefStorage.isLeaf('')).toBe(true);
+
+  const sampleRefStorage = createSampleRefStorage();
+  const sampleNode1 = sampleRefStorage.get([]);
+  expect(RefStorage.isLeaf(sampleNode1)).toBe(false);
+  const sampleNode2 = sampleRefStorage.get(['feature']);
+  expect(RefStorage.isLeaf(sampleNode2)).toBe(false);
+});
+
+test('Initial ref storage is correct', () => {
+  const storage = new RefStorage();
+  const master = storage.readLeaf(['master']);
+  expect(master).toBe('');
+});
+
 test('Can read refs', () => {
   const storage = createSampleRefStorage();
 

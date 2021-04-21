@@ -2,7 +2,7 @@ import FileSystem from '../file-system';
 import IndexFile from '../git-repository/index-file';
 import ObjectStorage from '../git-repository/object-storage';
 import RefStorage from '../git-repository/ref-storage';
-import { GitHead } from '../git-repository/types';
+import GitHead from '../git-repository/head';
 import { SandboxState } from '../types';
 
 /**
