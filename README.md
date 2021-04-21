@@ -1,46 +1,50 @@
-# Getting Started with Create React App
+# Git Playground
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A very simple web app to play around with the basic Git commands. Execute commands like `add`,
+`commit`, `checkout` and `reset` to see how the file system, object storage and index file change.
 
-## Available Scripts
+This project is only semi-functional. While the basic command usages work, a lot of basic Git
+functionality (like creating branches) is incomplete. Also, the UI for staging area and commit
+view is entirely unimplemented.
 
-In the project directory, you can run:
+![screenshot](https://github.com/nilaymaj/git-playground/blob/master/screenshot.png?raw=true)
 
-### `yarn start`
+This idea seemed good before I started the project, but I realized en route that beyond the extreme
+basic Git commands, such an app loses its utility. Commit-graph dedicated tools like
+[Learn Git Branching](https://github.com/pcottle/learnGitBranching) perform a much, much better job
+at teaching Git than this project ever will, if I continued this.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+The codebase has two broad parts:
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- **The Git shim (`src/simulator`)**: A basic implementation of the Git internal architecture - object storage, refs,
+  index file and some basic porcelain commands. More details at `src/simulator/README.md`.
+- **The web UI (`src/app`)**: React frontend for the user.
 
-### `yarn test`
+### Launching the app
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Quite straightforward. You need a modern version of [Node](https://nodejs.org) and preferably Yarn. To run the app:
 
-### `yarn build`
+```bash
+cd src/app
+yarn start # (or npm start, if not using Yarn)
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+View the app at [localhost:3000](http://localhost:3000).
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+The codebase also contains tests for the Git shim. Helpful if, by any chance, you are looking to contribute.
+Run `yarn test` to run the tests. The tests are written in `*.test.ts` files located near the relevant parts of code.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Missing stuff
 
-### `yarn eject`
+- The UI for staging area and commit view ("repository view")
+- Parsing of relative file paths and commit paths (eg: `HEAD^2`)
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### Future improvements
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+- **Support for branches**: Most of the code is written with branches in mind, so shouldn't be too difficult.
+- **Improve command implementations**:
+  - Some super-useful file system command flags that are not currently supported.
+  - The `git reset` command does not support resetting specific file paths, similar for some other commands.
+- **Add more commands**:
+  - `rm`, `restore`, `status`, `switch` seem like the next commands to add.
+  - `log`, `merge`, `rebase` require writing helper code for handling the commit graph.
