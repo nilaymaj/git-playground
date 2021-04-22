@@ -3,6 +3,8 @@
 A very simple web app to play around with the basic Git commands. Execute commands like `add`,
 `commit`, `checkout` and `reset` to see how the file system, object storage and index file change.
 
+Hosted on GitHub Pages - [play around](https://nilaymaj.github.io/git-playground).
+
 This project is only semi-functional. While the basic command usages work, a lot of basic Git
 functionality (like creating branches) is incomplete. Also, the UI for staging area and commit
 view is entirely unimplemented.
