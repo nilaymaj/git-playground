@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/git-playground/static/css/main.0cf27546.chunk.css",
+    "main.js": "/git-playground/static/js/main.408ad362.chunk.js",
+    "main.js.map": "/git-playground/static/js/main.408ad362.chunk.js.map",
+    "runtime-main.js": "/git-playground/static/js/runtime-main.bb4caab0.js",
+    "runtime-main.js.map": "/git-playground/static/js/runtime-main.bb4caab0.js.map",
+    "static/css/2.d8a61913.chunk.css": "/git-playground/static/css/2.d8a61913.chunk.css",
+    "static/js/2.68c3a314.chunk.js": "/git-playground/static/js/2.68c3a314.chunk.js",
+    "static/js/2.68c3a314.chunk.js.map": "/git-playground/static/js/2.68c3a314.chunk.js.map",
+    "static/js/3.14300059.chunk.js": "/git-playground/static/js/3.14300059.chunk.js",
+    "static/js/3.14300059.chunk.js.map": "/git-playground/static/js/3.14300059.chunk.js.map",
+    "index.html": "/git-playground/index.html",
+    "static/css/2.d8a61913.chunk.css.map": "/git-playground/static/css/2.d8a61913.chunk.css.map",
+    "static/css/main.0cf27546.chunk.css.map": "/git-playground/static/css/main.0cf27546.chunk.css.map",
+    "static/js/2.68c3a314.chunk.js.LICENSE.txt": "/git-playground/static/js/2.68c3a314.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.bb4caab0.js",
+    "static/css/2.d8a61913.chunk.css",
+    "static/js/2.68c3a314.chunk.js",
+    "static/css/main.0cf27546.chunk.css",
+    "static/js/main.408ad362.chunk.js"
+  ]
+}
