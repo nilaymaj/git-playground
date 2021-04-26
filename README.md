@@ -33,8 +33,17 @@ yarn start # (or npm start, if not using Yarn)
 
 View the app at [localhost:3000](http://localhost:3000).
 
-The codebase also contains tests for the Git shim. Helpful if, by any chance, you are looking to contribute.
-Run `yarn test` to run the tests. The tests are written in `*.test.ts` files located near the relevant parts of code.
+### Contributing
+
+If you're interested in this project, feel free to fork it and continue building. The code is well-documented 
+with quite a lot of comments. In addition, you'll find a basic overview of the Git internals at 
+`src/simulator/git-repository/README.md`, which with some help from external resources, should give you a good start.
+
+I've implemented all data structures and classes in the immutable style - if you're not familiar, read a bit about it.
+It may feel limiting at first but you'll quickly realise the ease of working with immutable objects.
+
+The codebase also contains tests for the Git "simulator". Run `yarn test` to run the tests. The tests are written 
+in `*.test.ts` files located near the relevant parts of code. The `checkout` and `reset` commands don't have tests right now.
 
 ### Missing stuff
 
