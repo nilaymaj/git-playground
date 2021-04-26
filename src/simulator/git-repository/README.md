@@ -6,7 +6,9 @@ Git operations are split into two broad parts:
 - **Plumbing**: Internal functionality like object storage and commit graphs that act as the base for porcelain operations.
 - **Porcelain**: Implementation of user-facing operations, using the underlying plumbing commands.
 
-## Porcelain
+This project does not implement the plumbing commands - the porcelain commands directly manipulate the underlying Git components.
+
+## Commands
 
 ### Committing changes
 
@@ -78,7 +80,8 @@ Some key points:
 
 - Only **files** are stored. The index file does not store information about directories.
 - Only **tracked** files are stored. Untracked and ignored files are not added to index.
-- When `git commit` is executed, it is the index file that directly forms the tree added to the commit.
+- **Most important:** When `git commit` is executed, it is the index file that directly forms the tree added to the commit.
+  No bells and whistles - it simply takes the index file contents, creates a Git tree and associates it with the commit.
 
 The index file plays a key role in the output of `git status`:
 
